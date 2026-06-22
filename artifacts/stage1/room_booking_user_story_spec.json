@@ -1,0 +1,31 @@
+{
+  "source": "text",
+  "source_id": "artifacts/stage1/room_booking_user_story.txt",
+  "title": "Room Booking Feature",
+  "description": "As a guest,\nI want to reserve an available room from the Shady Meadows B&B website,\nso that my booking is confirmed and can be verified through the booking API.\nAcceptance Criteria:\nUser can open the Shady Meadows home page.\nUser can view available room cards.\nUser can open a reservation page for a room.\nUser can submit valid guest details for future check-in and checkout dates.",
+  "acceptance_criteria": [
+    "User can open the Shady Meadows home page.",
+    "User can view available room cards.",
+    "User can open a reservation page for a room.",
+    "User can submit valid guest details for future check-in and checkout dates.",
+    "The UI shows Booking Confirmed after a successful reservation.",
+    "The created booking can be fetched from the booking API by booking id.",
+    "API booking details match the submitted guest name and booking dates."
+  ],
+  "affected_pages": [],
+  "user_types": [],
+  "test_cases": [
+    {
+      "id": "TEXT_001",
+      "title": "Room Booking Feature",
+      "priority": "High",
+      "type": "Regression",
+      "preconditions": [],
+      "steps": [],
+      "expected_result": "User can open the Shady Meadows home page.\nUser can view available room cards.\nUser can open a reservation page for a room.\nUser can submit valid guest details for future check-in and checkout dates.\nThe UI shows Booking Confirmed after a successful reservation.\nThe created booking can be fetched from the booking API by booking id.\nAPI booking details match the submitted guest name and booking dates.",
+      "tags": []
+    }
+  ],
+  "raw_content": "Room Booking Feature\n\nAs a guest,\nI want to reserve an available room from the Shady Meadows B&B website,\nso that my booking is confirmed and can be verified through the booking API.\n\nAcceptance Criteria:\n- User can open the Shady Meadows home page.\n- User can view available room cards.\n- User can open a reservation page for a room.\n- User can submit valid guest details for future check-in and checkout dates.\n- The UI shows Booking Confirmed after a successful reservation.\n- The created booking can be fetched from the booking API by booking id.\n- API booking details match the submitted guest name and booking dates.\n\nNegative Criteria:\n- Booking tests should not assert an exact booking id.\n- Admin-only flows should not be generated unless admin credentials are provided.\n",
+  "created_at": "2026-06-22T20:38:52.908340"
+}

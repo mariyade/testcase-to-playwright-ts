@@ -1,0 +1,11 @@
+coding_standards:
+  generated_playwright_tests:
+    - "Use fixtures from ../../fixtures/test in generated specs."
+    - "Prefer BookingPage for UI room booking flows."
+    - "Prefer BookingApi for direct API verification of created bookings."
+    - "Use future dates for bookings and keep checkout after checkin."
+    - "Capture POST /api/booking responses when a UI flow creates a booking."
+    - "Do not assert exact booking ids because the public demo data resets regularly."
+    - "Assert visible UI confirmation and captured POST response data for end-to-end booking tests."
+    - "Do not rely on GET /api/booking/{bookingid} for UI-created bookings unless a working API context is proven in the current environment."
+    - "Skip admin-only tests unless credentials are explicitly provided in the input or environment."

@@ -1,0 +1,45 @@
+business_rules:
+  target_app:
+    name: "Restful Booker Platform"
+    url: "https://automationintesting.online/"
+    api_url: "https://automationintesting.online/api"
+    public_api_docs: "https://restful-booker.herokuapp.com/"
+
+  booking:
+    availability:
+      rule: "Users can browse rooms and open a reservation page for a selected room."
+      assertion: "Room cards and Book now/View Details controls are visible."
+
+    reservation:
+      rule: "A guest can reserve a room by submitting first name, last name, email, and phone."
+      assertion: "Submitting valid guest details returns a 201 booking API response and shows Booking Confirmed in the UI."
+
+    date_range:
+      rule: "A booking must use a check-in date before the checkout date."
+      assertion: "Generated tests should use future dates and assert the confirmed date range."
+
+    api_verification:
+      rule: "UI-created bookings should verify the POST /api/booking response."
+      test_pattern: "Submit reservation in UI, capture POST /api/booking response, then assert bookingid, guest name, and booking dates from the response body."
+
+  contact:
+    valid_message:
+      rule: "Guests can submit a contact message with name, email, phone, subject, and message."
+      assertion: "A successful submission shows a confirmation or success message."
+
+    validation:
+      rule: "Missing or invalid contact fields should show validation errors instead of submitting."
+      assertion: "Invalid inputs keep the user on the form and display error feedback."
+
+  data_quality:
+    reset_policy:
+      rule: "The public demo environment resets data regularly."
+      guidance: "Tests must not depend on exact booking ids, exact room inventory counts, or persisted data from earlier runs."
+
+    api_access:
+      rule: "The hosted platform can block follow-up GET /api/booking/{bookingid} calls from automated request contexts."
+      guidance: "Prefer asserting the captured POST /api/booking response for UI-created bookings."
+
+    generated_data:
+      rule: "Generated tests should use unique guest details and future dates."
+      guidance: "Avoid relying on today's date, because the public demo can have existing bookings."

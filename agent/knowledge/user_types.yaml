@@ -1,0 +1,25 @@
+user_types:
+  guest:
+    description: "Public visitor who can browse rooms, create bookings, and submit contact messages."
+    how_to_test_as: "Open a fresh browser context without logging in."
+    visible_elements:
+      - Rooms navigation link
+      - Booking navigation link
+      - Room cards
+      - Book now or View Details controls
+      - Contact form
+    assertions_for_guest:
+      - Guest can open the home page.
+      - Guest can view available rooms.
+      - Guest can submit valid booking details.
+
+  admin:
+    description: "Authenticated staff user for admin panel management."
+    how_to_test_as: "Open /admin and log in with configured test credentials."
+    additional_access:
+      - Create rooms
+      - Edit rooms
+      - Delete rooms
+      - Review bookings
+    restrictions:
+      - Admin flows require credentials and should not be generated unless credentials are present in context.

@@ -1,0 +1,66 @@
+navigation_flows:
+  home_page:
+    url: "https://automationintesting.online/"
+    entry_points:
+      - Direct URL navigation
+    key_sections:
+      - Welcome hero
+      - Check availability form
+      - Room cards
+      - Location
+      - Contact form
+    expected_initial_state:
+      - Shady Meadows B&B heading is visible.
+      - Room cards are visible.
+      - Contact form is visible.
+    fixture: booking_page
+
+  room_listing:
+    starts_from: home_page
+    steps:
+      - Open the home page.
+      - Scroll or navigate to the Rooms section.
+      - Review room cards and prices.
+    assertions:
+      - Book now links are visible for available rooms.
+      - Room types such as Single, Double, or Suite are visible.
+    fixture: booking_page
+
+  reservation_page:
+    url: "https://automationintesting.online/reservation/{room_id}?checkin={yyyy-mm-dd}&checkout={yyyy-mm-dd}"
+    entry_points:
+      - Direct URL navigation
+      - Home page room card Book now link
+    key_sections:
+      - Room details
+      - Calendar/date selection
+      - Price summary
+      - Reserve Now action
+    fixture: booking_page
+
+  create_booking:
+    starts_from: reservation_page
+    steps:
+      - Open reservation page with room id and future check-in/check-out dates.
+      - Click Reserve Now.
+      - Enter guest first name, last name, email, and phone.
+      - Submit the reservation.
+    api_calls:
+      - "POST /api/booking"
+    assertions:
+      - POST /api/booking returns 201 with numeric bookingid.
+      - UI shows Booking Confirmed.
+      - POST /api/booking response matches guest name and booking dates.
+    fixture: booking_page
+
+  contact_message:
+    starts_from: home_page
+    steps:
+      - Open the home page.
+      - Fill contact form fields.
+      - Submit the message.
+    api_calls:
+      - "POST /api/message"
+    assertions:
+      - Success message or confirmation is visible.
+    fixture: booking_page
