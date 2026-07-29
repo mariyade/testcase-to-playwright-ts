@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  agent:
+    name: Agent lint and smoke
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Ruff lint
+        run: ruff check agent
+
+      - name: Ruff format
+        run: ruff format --check agent
+
+      - name: Compile Python
+        run: python -m compileall agent
+
+      - name: Stage 1 text smoke test
+        run: python -m agent.cli --text artifacts/stage1/room_booking_user_story.txt --stage1-only
+
+  playwright:
+    name: Playwright lint and typecheck
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: playwright/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: playwright
+
+      - name: ESLint
+        run: npm run lint
+        working-directory: playwright
+
+      - name: TypeScript
+        run: npm run typecheck
+        working-directory: playwright
+
+      - name: Playwright test discovery
+        run: npm run test:list
+        working-directory: playwright

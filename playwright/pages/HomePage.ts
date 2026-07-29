@@ -17,4 +17,3 @@ export class HomePage {
     await expect(this.heading).toBeVisible();
   }
 }
-

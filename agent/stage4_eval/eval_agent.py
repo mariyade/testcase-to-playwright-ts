@@ -7,7 +7,7 @@ from agent.stage4_eval.metrics import evaluate_all_metrics
 from agent.stage4_eval.models import EvalReport
 
 
-class EvalAgent:
+class Stage4EvalAgent:
     def evaluate(self, filepath: str | Path, spec: TestSpec, context: RepoContext) -> EvalReport:
         path = Path(filepath)
         report = EvalReport(filepath=str(path))
@@ -19,4 +19,3 @@ class EvalAgent:
         code = path.read_text(encoding="utf-8")
         report.metrics = evaluate_all_metrics(code, spec, context)
         return report.compute()
-

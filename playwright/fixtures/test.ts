@@ -3,11 +3,11 @@ import { BookingApi } from '../pages/BookingApi';
 import { BookingPage } from '../pages/BookingPage';
 import { HomePage } from '../pages/HomePage';
 
-type Fixtures = {
+interface Fixtures {
   bookingApi: BookingApi;
   bookingPage: BookingPage;
   homePage: HomePage;
-};
+}
 
 export const test = base.extend<Fixtures>({
   bookingApi: async ({ request }, use) => {

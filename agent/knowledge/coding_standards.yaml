@@ -1,6 +1,7 @@
 coding_standards:
   generated_playwright_tests:
-    - "Use fixtures from ../../fixtures/test in generated specs."
+    - "Generated specs are written to playwright/tests/generated/*.spec.ts."
+    - "From generated specs, import fixtures with: import { test, expect } from '../../fixtures/test';"
     - "Prefer BookingPage for UI room booking flows."
     - "Prefer BookingApi for direct API verification of created bookings."
     - "Use future dates for bookings and keep checkout after checkin."

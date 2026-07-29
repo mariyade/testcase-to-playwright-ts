@@ -23,7 +23,7 @@ class AgentConfig:
     max_tool_rounds: int = 8
 
     @classmethod
-    def load(cls) -> "AgentConfig":
+    def load(cls) -> AgentConfig:
         cfg = cls()
         if not cfg.openai_api_key:
             raise RuntimeError("OPENAI_API_KEY is required")

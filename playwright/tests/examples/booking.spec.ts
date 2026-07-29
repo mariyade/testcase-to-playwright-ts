@@ -1,4 +1,4 @@
-import { test } from '../../fixtures/test';
+import { expect, test } from '../../fixtures/test';
 import { expectBookingMatches, futureBookingDates, guestDetails } from '../../support/bookingTestData';
 
 test.describe('room booking', () => {
@@ -14,6 +14,7 @@ test.describe('room booking', () => {
     const createdBooking = await bookingPage.submitReservation();
 
     await bookingPage.assertBookingConfirmed(booking.checkin, booking.checkout);
+    expect(createdBooking.bookingid).toEqual(expect.any(Number));
     expectBookingMatches(createdBooking, guest, booking);
   });
 });

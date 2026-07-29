@@ -5,7 +5,6 @@ from pathlib import Path
 
 from agent.models import CodeChunk
 
-
 TS_CLASS_RE = re.compile(r"export\s+class\s+([A-Z][A-Za-z0-9_]*)")
 TS_METHOD_RE = re.compile(
     r"(?P<prefix>(?:async\s+)?(?P<name>[a-zA-Z_][A-Za-z0-9_]*)\s*\([^)]*\)\s*(?::\s*[^{]+)?\s*)\{"
@@ -14,7 +13,9 @@ TS_TEST_RE = re.compile(r"\b(?:test|it)(?:\.only|\.skip)?\s*\(\s*['\"]([^'\"]+)[
 FIXTURE_RE = re.compile(r"\b([a-zA-Z_][A-Za-z0-9_]*)\s*:\s*async\s*\(")
 
 
-def chunk_playwright_repo(playwright_root: Path, knowledge_dir: Path | None = None) -> list[CodeChunk]:
+def chunk_playwright_repo(
+    playwright_root: Path, knowledge_dir: Path | None = None
+) -> list[CodeChunk]:
     chunks: list[CodeChunk] = []
     chunks.extend(_chunk_source_dir(playwright_root / "pages", "code_index", "page_method"))
     chunks.extend(_chunk_source_dir(playwright_root / "fixtures", "code_index", "fixture"))
@@ -41,8 +42,11 @@ def _chunk_source_dir(root: Path, collection: str, chunk_type: str) -> list[Code
     return chunks
 
 
-def _chunk_typescript_methods(path: Path, source: str, collection: str, chunk_type: str) -> list[CodeChunk]:
-    class_name = _first_match(TS_CLASS_RE, source)
+def _chunk_typescript_methods(
+    path: Path, source: str, collection: str, chunk_type: str
+) -> list[CodeChunk]:
+    class_match = TS_CLASS_RE.search(source)
+    class_name = class_match.group(1) if class_match else ""
     chunks: list[CodeChunk] = []
     for match in TS_METHOD_RE.finditer(source):
         name = match.group("name")
@@ -74,7 +78,7 @@ def _chunk_tests(path: Path, source: str, collection: str) -> list[CodeChunk]:
     for index, match in enumerate(matches):
         title = match.group(1)
         end = matches[index + 1].start() if index + 1 < len(matches) else len(source)
-        text = source[match.start():end].strip()
+        text = source[match.start() : end].strip()
         chunks.append(_chunk(path, collection, "test_case", title, text, {"title": title}))
     return chunks
 
@@ -87,11 +91,15 @@ def _chunk_knowledge(root: Path) -> list[CodeChunk]:
         if path.suffix.lower() not in {".yaml", ".yml", ".md"}:
             continue
         text = path.read_text(encoding="utf-8")
-        chunks.append(_chunk(path, "know_index", "knowledge", path.stem, text, {"knowledge": path.stem}))
+        chunks.append(
+            _chunk(path, "know_index", "knowledge", path.stem, text, {"knowledge": path.stem})
+        )
     return chunks
 
 
-def _chunk(path: Path, collection: str, chunk_type: str, symbol: str, text: str, metadata: dict[str, str]) -> CodeChunk:
+def _chunk(
+    path: Path, collection: str, chunk_type: str, symbol: str, text: str, metadata: dict[str, str]
+) -> CodeChunk:
     chunk_id = f"{collection}:{path}:{symbol}".replace(" ", "_")
     return CodeChunk(
         id=chunk_id,
@@ -104,11 +112,6 @@ def _chunk(path: Path, collection: str, chunk_type: str, symbol: str, text: str,
     )
 
 
-def _first_match(pattern: re.Pattern[str], source: str) -> str:
-    match = pattern.search(source)
-    return match.group(1) if match else ""
-
-
 def _balanced_block(source: str, start: int, open_brace: int) -> str:
     depth = 0
     for index in range(open_brace, len(source)):
@@ -118,5 +121,5 @@ def _balanced_block(source: str, start: int, open_brace: int) -> str:
         elif char == "}":
             depth -= 1
             if depth == 0:
-                return source[start:index + 1]
+                return source[start : index + 1]
     return source[start:].strip()

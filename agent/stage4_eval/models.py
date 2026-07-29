@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 
 
-class Recommendation(str, Enum):
+class Recommendation(StrEnum):
     ACCEPT = "accept"
     REGENERATE = "regenerate"
     ESCALATE = "escalate"
@@ -33,7 +33,7 @@ class EvalReport:
     accept_threshold: float = 0.72
     regenerate_threshold: float = 0.52
 
-    def compute(self) -> "EvalReport":
+    def compute(self) -> EvalReport:
         weights = {
             "No Hallucinated Page Methods": 0.18,
             "Fixture Accuracy": 0.12,
@@ -60,4 +60,3 @@ class EvalReport:
         else:
             self.recommendation = Recommendation.ESCALATE
         return self
-

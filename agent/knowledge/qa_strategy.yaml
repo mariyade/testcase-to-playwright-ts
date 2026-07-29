@@ -1,0 +1,79 @@
+principles:
+  - Test observable user or system behaviour rather than implementation details.
+  - Prioritise coverage by business risk and user impact.
+  - Treat happy-path coverage as a starting point, not complete validation.
+  - Keep browser E2E tests focused on critical journeys worth the execution cost.
+  - Do not invent evidence, credentials, application behaviour, routes, selectors, or test results.
+
+risk_priority_order:
+  - authentication
+  - authorisation
+  - payments
+  - data_persistence
+  - core_business_workflows
+  - integrations
+  - search
+  - reporting
+  - cosmetic_ui
+
+test_design:
+  include_when_supported_by_source:
+    - valid_input_successful_submission
+    - invalid_input
+    - boundary_values
+    - empty_values
+    - duplicate_actions
+    - browser_refresh
+    - interrupted_requests
+    - navigation_away_and_back
+    - expired_sessions
+    - unexpected_user_actions
+  avoid:
+    - hard_waits
+    - brittle_selectors
+    - duplicated_setup_logic
+    - execution_order_dependencies
+    - assertions_on_unstable_public_demo_data
+  prefer:
+    - page_objects
+    - reusable_fixtures
+    - explicit_assertions
+    - stable_locators
+    - fresh_test_data
+    - clear_setup_and_teardown
+
+playwright_standards:
+  locator_preference_order:
+    - getByRole
+    - getByLabel
+    - getByPlaceholder
+    - getByTestId
+  avoid:
+    - xpath
+    - css_hierarchy_selectors
+    - layout_dependent_selectors
+    - page.waitForTimeout
+  assertion_examples:
+    - toBeVisible
+    - toHaveText
+    - toHaveURL
+    - toBeEnabled
+
+qa_reporting:
+  defect_evidence:
+    - screenshot_or_trace_when_relevant
+    - url_and_environment
+    - preconditions
+    - reproduction_steps
+    - expected_result
+    - actual_result
+    - console_errors_when_relevant
+    - network_evidence_when_relevant
+    - business_risk
+  done_criteria:
+    - acceptance_criteria_satisfied
+    - relevant_automated_tests_pass
+    - regression_risk_considered
+    - no_critical_defects
+    - no_high_defects_without_explicit_acceptance
+    - material_testing_evidence_recorded

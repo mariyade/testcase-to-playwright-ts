@@ -20,12 +20,15 @@ class RunResult:
 def run_playwright(playwright_root: str | Path, spec_file: str | Path) -> RunResult:
     root = Path(playwright_root)
     target = Path(spec_file)
-    if target.is_absolute():
-        target_arg = str(target.relative_to(root))
-    else:
-        target_arg = str(target)
+    target_arg = str(target.relative_to(root)) if target.is_absolute() else str(target)
+    return _run_playwright_command(root, ["npx", "playwright", "test", target_arg])
 
-    command = ["npx", "playwright", "test", target_arg]
+
+def list_playwright_tests(playwright_root: str | Path) -> RunResult:
+    return _run_playwright_command(Path(playwright_root), ["npx", "playwright", "test", "--list"])
+
+
+def _run_playwright_command(root: Path, command: list[str]) -> RunResult:
     completed = subprocess.run(
         command,
         cwd=root,
@@ -34,16 +37,3 @@ def run_playwright(playwright_root: str | Path, spec_file: str | Path) -> RunRes
         check=False,
     )
     return RunResult(command, completed.returncode, completed.stdout, completed.stderr)
-
-
-def list_playwright_tests(playwright_root: str | Path) -> RunResult:
-    command = ["npx", "playwright", "test", "--list"]
-    completed = subprocess.run(
-        command,
-        cwd=Path(playwright_root),
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    return RunResult(command, completed.returncode, completed.stdout, completed.stderr)
-

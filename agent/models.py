@@ -1,27 +1,26 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 
 from pydantic import BaseModel, Field
 
 
-class Priority(str, Enum):
+class Priority(StrEnum):
     CRITICAL = "Critical"
     HIGH = "High"
     MEDIUM = "Medium"
     LOW = "Low"
 
 
-class TestType(str, Enum):
+class TestType(StrEnum):
     SMOKE = "Smoke"
     REGRESSION = "Regression"
     SANITY = "Sanity"
 
 
-class InputSource(str, Enum):
-    EXCEL = "excel"
+class InputSource(StrEnum):
     JIRA = "jira"
     GITHUB = "github"
     TEXT = "text"

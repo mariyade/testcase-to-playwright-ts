@@ -3,23 +3,42 @@ user_types:
     description: "Public visitor who can browse rooms, create bookings, and submit contact messages."
     how_to_test_as: "Open a fresh browser context without logging in."
     visible_elements:
-      - Rooms navigation link
-      - Booking navigation link
-      - Room cards
-      - Book now or View Details controls
-      - Contact form
-    assertions_for_guest:
-      - Guest can open the home page.
-      - Guest can view available rooms.
-      - Guest can submit valid booking details.
+      - "Rooms navigation link"
+      - "Booking navigation link"
+      - "Room cards"
+      - "Book now or View Details controls"
+      - "Contact form"
+    assertions:
+      - "Guest can open the home page."
+      - "Guest can view available rooms."
+      - "Guest can submit valid booking details."
+
+  signed_in_user:
+    description: "Authenticated customer user with access to account-specific features."
+    how_to_test_as: "Log in with configured customer test credentials."
+    credentials_required:
+      - "CUSTOMER_USERNAME"
+      - "CUSTOMER_PASSWORD"
+    visible_elements:
+      - "Account navigation"
+      - "Profile or account details"
+      - "Customer booking history"
+    restrictions:
+      - "Signed-in user flows require customer credentials."
+      - "Do not generate signed-in user tests unless credentials are present in context or environment."
 
   admin:
-    description: "Authenticated staff user for admin panel management."
-    how_to_test_as: "Open /admin and log in with configured test credentials."
+    description: "Authenticated staff user who manages application data and back-office workflows."
+    how_to_test_as: "Open /admin and log in with configured admin test credentials."
+    credentials_required:
+      - "ADMIN_USERNAME"
+      - "ADMIN_PASSWORD"
     additional_access:
-      - Create rooms
-      - Edit rooms
-      - Delete rooms
-      - Review bookings
+      - "Create rooms"
+      - "Edit rooms"
+      - "Delete rooms"
+      - "Review bookings"
+      - "Manage users"
     restrictions:
-      - Admin flows require credentials and should not be generated unless credentials are present in context.
+      - "Admin flows require admin credentials."
+      - "Do not generate admin tests unless admin credentials are present in context or environment."

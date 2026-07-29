@@ -2,7 +2,7 @@
 
 Python AI automation agent that reads test specifications, retrieves TypeScript
 Playwright context, generates `.spec.ts` tests, evaluates them with LLM-centered
-metrics, and can run Playwright plus update source status.
+metrics, and can run Playwright.
 
 This is an original scaffold for a Python-controlled, TypeScript-Playwright
 test generation framework.
@@ -20,12 +20,12 @@ test generation framework.
 
 ## Pipeline
 
-1. Parse Excel/text test cases into a normalized `TestSpec`.
+1. Parse Jira, GitHub, or text test specifications into a normalized `TestSpec`.
 2. Scan the Playwright repo for page objects, fixtures, existing specs, and rules.
 3. Generate TypeScript Playwright tests through a GPT tool loop.
 4. Evaluate generated tests with LLM metrics and targeted static evidence.
 5. Regenerate, accept, or escalate based on the evaluation report.
-6. Run `npx playwright test` and optionally update Excel status.
+6. Run `npx playwright test`.
 
 ## Layout
 
@@ -34,6 +34,11 @@ agent/
   models.py
   config.py
   stage1_ticket_parser/
+    parser.py
+    jira.py
+    github.py
+    text.py
+    llm.py
   stage2_context_retrieval/
     chunker.py
     indexer.py
@@ -74,12 +79,9 @@ npx playwright install
 
 ## Input Sources
 
-Stage 1 can read ticket specifications from Excel, Jira JSON, GitHub issues, or text/URL sources:
+Stage 1 can read ticket specifications from Jira JSON, GitHub issues, or text/URL sources:
 
 ```bash
-python -m agent.cli --excel path/to/cases.xlsx
-python -m agent.cli --excel path/to/cases.xlsx --sheet "Companies Page" --status "To Be Automated" --limit 2
-python -m agent.cli --excel path/to/cases.xlsx --stage1-only --save-spec artifacts/stage1/spec.json
 python -m agent.cli --jira path/to/jira-issue.json
 python -m agent.cli --jira path/to/jira-issue.json --stage1-only --save-spec artifacts/stage1/jira_issue_spec.json
 python -m agent.cli --jira "https://your-domain.atlassian.net/rest/api/3/issue/KEY-123" --stage1-only --save-spec artifacts/stage1/jira_KEY-123.json
@@ -99,9 +101,8 @@ export JIRA_API_TOKEN="your-api-token"
 
 For private GitHub issues or higher API limits, set `GITHUB_TOKEN`.
 
-Free-text and HTML sources use the Stage 1 QA extraction prompt when
-`OPENAI_API_KEY` is available. Without an API key, Stage 1 falls back to a
-deterministic section parser.
+Free-text and HTML sources use the Stage 1 QA extraction prompt and require
+`OPENAI_API_KEY`.
 
 ## Demo Target
 
@@ -126,7 +127,7 @@ Run retrieval only:
 ```bash
 python -m agent.cli \
   --text artifacts/stage1/room_booking_user_story.txt \
-  --retrieve
+  --retrieve-context
 ```
 
 Run the checked-in UI plus API example:
@@ -150,13 +151,13 @@ Build or refresh the index after changing page objects, fixtures, tests, or
 knowledge:
 
 ```bash
-python -m agent.cli --index
+python -m agent.cli --build-index
 ```
 
 Search the index while debugging:
 
 ```bash
-python -m agent.cli --search "room booking API confirmation guest dates"
+python -m agent.cli --search-index "room booking API confirmation guest dates"
 ```
 
 Parse Stage 1 and retrieve Stage 2 context without generating code:
@@ -164,7 +165,7 @@ Parse Stage 1 and retrieve Stage 2 context without generating code:
 ```bash
 python -m agent.cli \
   --text artifacts/stage1/room_booking_user_story.txt \
-  --retrieve
+  --retrieve-context
 ```
 
 The current implementation uses deterministic local chunking plus real embedding

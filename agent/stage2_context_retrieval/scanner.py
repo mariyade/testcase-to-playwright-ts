@@ -12,14 +12,16 @@ except ModuleNotFoundError:
 
 
 CLASS_RE = re.compile(r"export\s+class\s+([A-Z][A-Za-z0-9_]*)")
-METHOD_RE = re.compile(
-    r"(?:async\s+)?([a-zA-Z_][A-Za-z0-9_]*)\s*\([^)]*\)\s*(?::\s*[^{]+)?\s*\{"
+METHOD_RE = re.compile(r"(?:async\s+)?([a-zA-Z_][A-Za-z0-9_]*)\s*\([^)]*\)\s*(?::\s*[^{]+)?\s*\{")
+PROPERTY_RE = re.compile(
+    r"(?:readonly|public|private|protected)?\s+([a-zA-Z_][A-Za-z0-9_]*)\s*[:=]"
 )
-PROPERTY_RE = re.compile(r"(?:readonly|public|private|protected)?\s+([a-zA-Z_][A-Za-z0-9_]*)\s*[:=]")
 FIXTURE_RE = re.compile(r"\b([a-zA-Z_][A-Za-z0-9_]*)\s*:\s*async\s*\(")
 
 
-def scan_playwright_repo(playwright_root: str | Path, knowledge_dir: str | Path | None = None) -> RepoContext:
+def scan_playwright_repo(
+    playwright_root: str | Path, knowledge_dir: str | Path | None = None
+) -> RepoContext:
     root = Path(playwright_root)
     pages_dir = root / "pages"
     fixtures_dir = root / "fixtures"
@@ -66,11 +68,13 @@ def _read_page_objects(path: Path) -> list[PageObjectInfo]:
         return []
 
     methods = [
-        name for name in METHOD_RE.findall(source)
+        name
+        for name in METHOD_RE.findall(source)
         if name not in {"if", "for", "while", "switch", "catch", "constructor"}
     ]
     properties = [
-        name for name in PROPERTY_RE.findall(source)
+        name
+        for name in PROPERTY_RE.findall(source)
         if name not in {"return", "const", "let", "var", "await"}
     ]
 

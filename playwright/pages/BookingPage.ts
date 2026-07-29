@@ -1,19 +1,19 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
-export type GuestDetails = {
+export interface GuestDetails {
   firstname: string;
   lastname: string;
   email: string;
   phone: string;
-};
+}
 
-export type BookingRequest = {
+export interface BookingRequest {
   roomId: number;
   checkin: string;
   checkout: string;
-};
+}
 
-export type CreatedBooking = {
+export interface CreatedBooking {
   bookingid: number;
   firstname: string;
   lastname: string;
@@ -21,7 +21,7 @@ export type CreatedBooking = {
     checkin: string;
     checkout: string;
   };
-};
+}
 
 export class BookingPage {
   readonly page: Page;
@@ -51,7 +51,7 @@ export class BookingPage {
   }
 
   async gotoReservation({ roomId, checkin, checkout }: BookingRequest): Promise<void> {
-    await this.page.goto(`/reservation/${roomId}?checkin=${checkin}&checkout=${checkout}`);
+    await this.page.goto(`/reservation/${String(roomId)}?checkin=${checkin}&checkout=${checkout}`);
   }
 
   async assertLoaded(): Promise<void> {
@@ -82,7 +82,8 @@ export class BookingPage {
     await this.reserveButton.click();
     const response = await responsePromise;
     expect(response.status()).toBe(201);
-    const body = await response.json();
+    const body: unknown = await response.json();
+    assertCreatedBooking(body);
     expect(body.bookingid).toEqual(expect.any(Number));
     return body;
   }
@@ -91,4 +92,22 @@ export class BookingPage {
     await expect(this.bookingConfirmed).toBeVisible();
     await expect(this.page.getByText(`${checkin} - ${checkout}`)).toBeVisible();
   }
+}
+
+function assertCreatedBooking(value: unknown): asserts value is CreatedBooking {
+  if (
+    !isRecord(value) ||
+    typeof value.bookingid !== 'number' ||
+    typeof value.firstname !== 'string' ||
+    typeof value.lastname !== 'string' ||
+    !isRecord(value.bookingdates) ||
+    typeof value.bookingdates.checkin !== 'string' ||
+    typeof value.bookingdates.checkout !== 'string'
+  ) {
+    throw new Error('Created booking response did not match the expected booking shape');
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
 }

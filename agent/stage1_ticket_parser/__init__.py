@@ -1,2 +1,1 @@
-"""Ticket and test specification parsing."""
-
+"""Stage 1 requirement parsing."""

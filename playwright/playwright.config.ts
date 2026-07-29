@@ -7,7 +7,7 @@ export default defineConfig({
     timeout: 5_000,
   },
   use: {
-    baseURL: process.env.BASE_URL || 'https://automationintesting.online',
+    baseURL: process.env.BASE_URL ?? 'https://automationintesting.online',
     trace: 'on-first-retry',
   },
   projects: [

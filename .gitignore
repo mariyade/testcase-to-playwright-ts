@@ -32,12 +32,13 @@ agent/vector_store/
 artifacts/**/*.tmp
 
 # Playwright / Node
-playwright/node_modules/
+playwright/node_modules
 playwright/test-results/
 playwright/playwright-report/
 playwright/blob-report/
 playwright/.cache/
-playwright/tests/generated/
+playwright/tests/generated/*
+!playwright/tests/generated/.gitkeep
 
 # Logs
 *.log
