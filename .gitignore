@@ -37,8 +37,6 @@ playwright/test-results/
 playwright/playwright-report/
 playwright/blob-report/
 playwright/.cache/
-playwright/tests/generated/*
-!playwright/tests/generated/.gitkeep
 
 # Logs
 *.log

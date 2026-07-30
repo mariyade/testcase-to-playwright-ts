@@ -8,14 +8,21 @@ from agent.stage4_eval.models import MetricResult
 
 EVAL_MODEL = "gpt-4o"
 
+QUICK_METRIC_NAMES = {
+    "No Hallucinated Page Methods",
+    "Spec Coverage",
+}
+
 METRIC_INPUTS = [
     (
         "No Hallucinated Page Methods",
         """
         Check every page-object method or property used by the generated TypeScript test.
         It must exist in the provided page API context. Playwright built-ins and expect()
-        are allowed. Score 1.0 for no hallucinations, 0.75 for one minor issue,
-        0.5 for two issues, and 0.0 for three or more.
+        are allowed. Raw page.fill, page.click, page.locator, CSS selectors, and invented
+        page-object methods are failures unless they are explicitly present in the repo
+        context. Score 1.0 for no hallucinations, 0.75 for one minor issue, 0.5 for two
+        issues, and 0.0 for three or more.
         """,
         0.75,
     ),
@@ -74,7 +81,9 @@ METRIC_INPUTS = [
 ]
 
 
-def evaluate_all_metrics(code: str, spec: TestSpec, context: RepoContext) -> list[MetricResult]:
+def evaluate_all_metrics(
+    code: str, spec: TestSpec, context: RepoContext, full: bool = False
+) -> list[MetricResult]:
     spec_text = spec.model_dump_json(indent=2)
     repo_text = "\n\n".join(
         [
@@ -85,7 +94,8 @@ def evaluate_all_metrics(code: str, spec: TestSpec, context: RepoContext) -> lis
     )
 
     results: list[MetricResult] = []
-    for name, criteria, threshold in METRIC_INPUTS:
+    metric_inputs = METRIC_INPUTS if full else _quick_metric_inputs()
+    for name, criteria, threshold in metric_inputs:
         metric = GEval(
             name=name,
             model=EVAL_MODEL,
@@ -98,14 +108,30 @@ def evaluate_all_metrics(code: str, spec: TestSpec, context: RepoContext) -> lis
             threshold=threshold,
         )
         test_case = LLMTestCase(input=spec_text, actual_output=code, context=[repo_text])
-        metric.measure(test_case)
-        results.append(
-            MetricResult(
-                name=name,
-                score=round(metric.score or 0.0, 3),
-                passed=metric.is_successful(),
-                reason=metric.reason or "",
-                issues=[] if metric.is_successful() else [metric.reason or f"{name} failed"],
+        try:
+            metric.measure(test_case)
+            results.append(
+                MetricResult(
+                    name=name,
+                    score=round(metric.score or 0.0, 3),
+                    passed=metric.is_successful(),
+                    reason=metric.reason or "",
+                    issues=[] if metric.is_successful() else [metric.reason or f"{name} failed"],
+                )
             )
-        )
+        except Exception as exc:
+            reason = f"{name} could not be evaluated: {type(exc).__name__}: {exc}"
+            results.append(
+                MetricResult(
+                    name=name,
+                    score=0.0,
+                    passed=False,
+                    reason=reason,
+                    issues=[reason],
+                )
+            )
     return results
+
+
+def _quick_metric_inputs() -> list[tuple[str, str, float]]:
+    return [item for item in METRIC_INPUTS if item[0] in QUICK_METRIC_NAMES]

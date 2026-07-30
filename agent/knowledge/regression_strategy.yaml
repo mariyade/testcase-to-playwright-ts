@@ -1,0 +1,32 @@
+regression_e2e:
+  generated_test_rules:
+    - "Use Playwright test details syntax for tags, for example test('name', { tag: '@smoke' }, async (...) => {})."
+    - "Tag smoke tests with { tag: '@smoke' }."
+    - "Tag broader regression E2E tests with { tag: '@e2e' }."
+    - "Use existing page-object methods and stable fixtures."
+    - "Avoid hard waits and implementation-detail selectors."
+
+regression_visual:
+  purpose: "Detect unintended UI changes after the app is known to be in a valid state."
+  breakpoints:
+    desktop: "1440x900"
+    tablet: "768x1024"
+    mobile: "390x844"
+  checks:
+    - "Screenshots"
+    - "Horizontal overflow"
+    - "Responsive behaviour"
+    - "Clipping"
+    - "Layout stability"
+    - "Spacing"
+    - "Font rendering"
+    - "Dark mode when supported"
+    - "RTL when supported"
+  environment:
+    - "Take and compare snapshots on one OS only."
+  generated_test_rules:
+    - "Tag visual tests with { tag: '@visual' }."
+    - "Generate visual tests only when the story mentions visual, layout, responsive behaviour, card browsing, overflow, clipping, spacing, font rendering, dark mode, or RTL concerns."
+    - "Use the shared Playwright toHaveScreenshot stylePath for screenshot-specific stabilization."
+    - "Do not update screenshots or snapshot baselines from generated code."
+    - "Keep screenshots deterministic and avoid masking real layout problems."

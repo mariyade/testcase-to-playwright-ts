@@ -2,6 +2,15 @@ name: Playwright E2E
 
 on:
   workflow_dispatch:
+    inputs:
+      run_visual:
+        description: "Run visual regression snapshots"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
 
 jobs:
   playwright:
@@ -26,8 +35,17 @@ jobs:
         run: npx playwright install --with-deps chromium
         working-directory: playwright
 
-      - name: Run Playwright examples
-        run: npm test
+      - name: Run generated smoke E2E
+        run: npm run test:smoke
+        working-directory: playwright
+
+      - name: Run generated visual regression
+        if: inputs.run_visual == 'true'
+        run: npm run test:regression:visual
+        working-directory: playwright
+
+      - name: Run generated regression E2E
+        run: npm run test:regression:e2e
         working-directory: playwright
 
       - name: Upload Playwright report

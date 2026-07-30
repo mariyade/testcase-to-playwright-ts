@@ -5,6 +5,9 @@ export default defineConfig({
   timeout: 30_000,
   expect: {
     timeout: 5_000,
+    toHaveScreenshot: {
+      stylePath: './screenshot.css',
+    },
   },
   use: {
     baseURL: process.env.BASE_URL ?? 'https://automationintesting.online',

@@ -13,32 +13,19 @@ user_types:
       - "Guest can view available rooms."
       - "Guest can submit valid booking details."
 
-  signed_in_user:
-    description: "Authenticated customer user with access to account-specific features."
-    how_to_test_as: "Log in with configured customer test credentials."
-    credentials_required:
-      - "CUSTOMER_USERNAME"
-      - "CUSTOMER_PASSWORD"
-    visible_elements:
-      - "Account navigation"
-      - "Profile or account details"
-      - "Customer booking history"
-    restrictions:
-      - "Signed-in user flows require customer credentials."
-      - "Do not generate signed-in user tests unless credentials are present in context or environment."
-
   admin:
     description: "Authenticated staff user who manages application data and back-office workflows."
     how_to_test_as: "Open /admin and log in with configured admin test credentials."
     credentials_required:
-      - "ADMIN_USERNAME"
-      - "ADMIN_PASSWORD"
+      - "username admin"
+      - "password password"
     additional_access:
-      - "Create rooms"
-      - "Edit rooms"
-      - "Delete rooms"
+      - "View Rooms"
+      - "View Report"
+      - "View Branding"
+      - "View Messages"
+      - "View Front Page"
       - "Review bookings"
-      - "Manage users"
     restrictions:
-      - "Admin flows require admin credentials."
-      - "Do not generate admin tests unless admin credentials are present in context or environment."
+      - "Admin mutation flows such as create, edit, or delete require an explicit story."
+      - "Do not mix admin flows into guest stories."

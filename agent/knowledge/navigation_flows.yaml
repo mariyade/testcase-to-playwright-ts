@@ -24,6 +24,21 @@ navigation_flows:
     assertions:
       - Book now links are visible for available rooms.
       - Room types such as Single, Double, or Suite are visible.
+      - Single room shows TV, WiFi, Safe, and £100 per night.
+      - Double room shows TV, Radio, Safe, and £150 per night.
+      - Suite room shows Radio, WiFi, Safe, and £225 per night.
+    fixture: booking_page
+
+  check_availability:
+    starts_from: home_page
+    steps:
+      - Open the home page.
+      - Enter check-in and check-out dates.
+      - Submit Check Availability & Book Your Stay.
+      - Review available room cards.
+    assertions:
+      - Our Rooms section remains visible.
+      - Matching room cards remain available for booking.
     fixture: booking_page
 
   reservation_page:
@@ -64,3 +79,18 @@ navigation_flows:
     assertions:
       - Success message or confirmation is visible.
     fixture: booking_page
+
+  admin_rooms_dashboard:
+    url: "https://automationintesting.online/admin"
+    entry_points:
+      - Direct admin URL navigation
+    steps:
+      - Open the admin login page.
+      - Log in with username admin and password password.
+      - Review the admin dashboard navigation.
+      - Review the rooms table.
+    assertions:
+      - Restful Booker Platform Demo heading is visible.
+      - Rooms, Report, Branding, Messages, and Front Page navigation is visible.
+      - Messages shows count 5.
+      - Rooms 101, 102, and 103 are visible with type, accessibility, price, and details.

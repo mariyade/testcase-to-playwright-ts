@@ -48,7 +48,7 @@ Extraction rules:
 - Use the source language as the authority. Do not invent product behavior, selectors, routes, accounts, data, APIs, permissions, or UI states.
 - Normalize names to snake_case in affected_pages, user_types, and tags.
 - Use Critical only for flows whose failure blocks a primary business or user journey.
-- Use High for important customer-visible behavior that does not fully block the main journey.
+- Use High for important user-visible behavior that does not fully block the main journey.
 - Use Medium or Low for secondary, informational, or low-risk behavior.
 - Use Smoke for minimal happy-path coverage, Regression for deeper behavior coverage, and Sanity for quick post-change checks.
 - Include negative, permission, validation, or empty-state cases only when the source implies or states those behaviors.

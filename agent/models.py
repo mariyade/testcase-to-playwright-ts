@@ -78,6 +78,14 @@ class RetrievalResult(BaseModel):
     warnings: list[str] = Field(default_factory=list)
 
 
+class MissingPageObjectMethod(BaseModel):
+    page_object: str
+    method_signature: str
+    filepath: Path | None = None
+    reason: str = ""
+    suggested_usage: str = ""
+
+
 class RepoContext(BaseModel):
     playwright_root: Path
     page_objects: list[PageObjectInfo] = Field(default_factory=list)

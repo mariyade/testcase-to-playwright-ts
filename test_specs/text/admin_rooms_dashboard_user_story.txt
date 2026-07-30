@@ -1,0 +1,32 @@
+Title: Admin views rooms dashboard
+
+Description:
+As an admin user,
+I want to log in to the Restful Booker Platform Demo admin area,
+so that I can review the configured rooms and admin navigation sections.
+
+Acceptance Criteria:
+- Admin can open the admin login page.
+- Admin can log in with username admin and password password.
+- Admin sees the Restful Booker Platform Demo dashboard.
+- Admin can see navigation for Rooms, Report, Branding, Messages, and Front Page.
+- Admin sees Messages with a count of 5.
+- Admin can see the Rooms table with columns Room #, Type, Accessible, Price, and Room details.
+- Admin can see these room records:
+  - 101, Single, accessible true, price 100, room details TV, WiFi, Safe.
+  - 102, Double, accessible true, price 150, room details TV, Radio, Safe.
+  - 103, Suite, accessible true, price 225, room details Radio, WiFi, Safe.
+- Admin can see room detail options for Single, accessible false, WiFi, TV, Radio, Refreshments, and Safe.
+
+Test Data:
+- Username: admin
+- Password: password
+
+Negative Criteria:
+- Only guest and admin roles exist in this demo app.
+- Do not create, edit, or delete rooms unless the story explicitly asks for mutation.
+
+Automation Notes:
+- Admin credentials are intentionally provided for this admin-only story.
+- Use existing Playwright page objects where available.
+- If admin page-object methods do not exist, report missing page-object methods separately instead of inventing raw selectors.

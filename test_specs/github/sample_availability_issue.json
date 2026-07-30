@@ -1,0 +1,17 @@
+{
+  "number": 42,
+  "state": "open",
+  "title": "Guest can check availability and browse matching rooms",
+  "body": "As a guest visitor,\nI want to check availability for a stay,\nso that I can browse rooms available for my selected dates.\n\nAcceptance Criteria:\n- Guest can open the home page.\n- Guest can use Check Availability & Book Your Stay.\n- Guest can enter check-in date 29/07/2026 and check-out date 30/07/2026.\n- Guest sees the Our Rooms section after searching.\n- Guest sees available Single and Double room cards with prices and facilities.\n- Guest can choose an available room to continue booking.\n\nSteps:\n- Navigate to the home page.\n- Enter check-in date 29/07/2026.\n- Enter check-out date 30/07/2026.\n- Submit the availability search.\n- Verify room cards remain visible.\n- Verify a booking action is available.\n\nAutomation Notes:\n- Use existing page objects where available.\n- Report missing availability-search page-object methods separately.\n- Only guest and admin roles exist in this demo app.",
+  "labels": [
+    {
+      "name": "guest"
+    },
+    {
+      "name": "availability"
+    },
+    {
+      "name": "page_home_page"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+Title: Guest browses room cards
+
+Description:
+As a guest visitor,
+I want to browse the available room cards on the Shady Meadows B&B home page,
+so that I can compare room types, facilities, and prices before choosing a stay.
+
+Acceptance Criteria:
+- Guest can open the home page.
+- Guest can see the Our Rooms section.
+- Guest can see a Single room with TV, WiFi, Safe, and £100 per night.
+- Guest can see a Double room with TV, Radio, Safe, and £150 per night.
+- Guest can see a Suite room with Radio, WiFi, Safe, and £225 per night.
+- Guest can see a booking or reservation action for each available room.
+
+Test Steps:
+- Navigate to the home page.
+- Locate the Our Rooms section.
+- Verify the Single, Double, and Suite room cards.
+- Verify each room card shows expected facilities and price.
+- Verify each room card has a booking or reservation action.
+
+Automation Notes:
+- Use existing Playwright page objects where available.
+- If room-card helper methods are missing, report missing page-object methods separately.
+- Only guest and admin roles exist in this demo app.

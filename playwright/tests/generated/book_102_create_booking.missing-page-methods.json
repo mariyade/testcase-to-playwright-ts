@@ -1,0 +1,16 @@
+[
+  {
+    "page_object": "BookingPage",
+    "method_signature": "async createExistingReservation(request: BookingRequest, guest: GuestDetails): Promise<CreatedBooking>",
+    "filepath": "playwright/pages/BookingPage.ts",
+    "reason": "To verify overlapping bookings, the test needs a helper that creates a known reservation precondition before attempting the conflicting booking.",
+    "suggested_usage": "await bookingPage.createExistingReservation({ roomId: 101, checkin, checkout }, guest);"
+  },
+  {
+    "page_object": "BookingPage",
+    "method_signature": "async assertValidationErrors(): Promise<void>",
+    "filepath": "playwright/pages/BookingPage.ts",
+    "reason": "To validate that required fields show errors when empty during booking and the spec needs a helper for asserting validation errors.",
+    "suggested_usage": "await bookingPage.assertValidationErrors();"
+  }
+]

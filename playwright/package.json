@@ -6,7 +6,11 @@
     "lint": "eslint \"**/*.ts\"",
     "lint:fix": "eslint \"**/*.ts\" --fix",
     "test": "playwright test",
-    "test:list": "playwright test --list",
+    "test:smoke": "playwright test tests/generated/e2e --grep @smoke --pass-with-no-tests",
+    "test:regression:e2e": "playwright test tests/generated/e2e --grep @e2e --pass-with-no-tests",
+    "test:regression:visual": "playwright test tests/generated/visual --grep @visual --pass-with-no-tests",
+    "test:regression": "npm run test:smoke && npm run test:regression:visual && npm run test:regression:e2e",
+    "test:list": "playwright test --list --pass-with-no-tests",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

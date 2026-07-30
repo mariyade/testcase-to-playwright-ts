@@ -63,8 +63,8 @@ def read_jira_spec(source: str | Path) -> TestSpec:
             pass
 
     acceptance_criteria: list[str] = []
-    for field_name, value in fields.items():
-        if "acceptance" in field_name.lower() and value:
+    for field_key, value in fields.items():
+        if "acceptance" in field_key.lower() and value:
             criteria_text = _jira_text(value).replace("\r\n", "\n")
             acceptance_criteria = [
                 line.strip(" -\t") for line in criteria_text.split("\n") if line.strip(" -\t")

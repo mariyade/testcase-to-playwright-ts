@@ -8,7 +8,9 @@ from agent.stage4_eval.models import EvalReport
 
 
 class Stage4EvalAgent:
-    def evaluate(self, filepath: str | Path, spec: TestSpec, context: RepoContext) -> EvalReport:
+    def evaluate(
+        self, filepath: str | Path, spec: TestSpec, context: RepoContext, full: bool = False
+    ) -> EvalReport:
         path = Path(filepath)
         report = EvalReport(filepath=str(path))
 
@@ -17,5 +19,5 @@ class Stage4EvalAgent:
             return report
 
         code = path.read_text(encoding="utf-8")
-        report.metrics = evaluate_all_metrics(code, spec, context)
+        report.metrics = evaluate_all_metrics(code, spec, context, full=full)
         return report.compute()

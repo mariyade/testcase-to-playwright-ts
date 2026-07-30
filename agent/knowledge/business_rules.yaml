@@ -6,9 +6,28 @@ business_rules:
     public_api_docs: "https://restful-booker.herokuapp.com/"
 
   booking:
+    room_inventory:
+      rule: "The home page currently advertises Single, Double, and Suite room cards."
+      expected_rooms:
+        - room: "101"
+          type: "Single"
+          accessible: true
+          price: 100
+          details: ["TV", "WiFi", "Safe"]
+        - room: "102"
+          type: "Double"
+          accessible: true
+          price: 150
+          details: ["TV", "Radio", "Safe"]
+        - room: "103"
+          type: "Suite"
+          accessible: true
+          price: 225
+          details: ["Radio", "WiFi", "Safe"]
+
     availability:
-      rule: "Users can browse rooms and open a reservation page for a selected room."
-      assertion: "Room cards and Book now/View Details controls are visible."
+      rule: "Guests can browse room cards and use Check Availability & Book Your Stay."
+      assertion: "Searching with valid check-in/check-out dates keeps available room cards visible."
 
     reservation:
       rule: "A guest can reserve a room by submitting first name, last name, email, and phone."
@@ -31,6 +50,15 @@ business_rules:
       rule: "Missing or invalid contact fields should show validation errors instead of submitting."
       assertion: "Invalid inputs keep the user on the form and display error feedback."
 
+  admin:
+    login:
+      rule: "Admin can log in to the Restful Booker Platform Demo admin area with username admin and password password."
+      assertion: "After login, admin sees the Rooms, Report, Branding, Messages, and Front Page navigation."
+
+    dashboard:
+      rule: "Admin can review the rooms table and room detail options."
+      assertion: "Rooms table shows Room #, Type, Accessible, Price, and Room details, including rooms 101, 102, and 103."
+
   data_quality:
     reset_policy:
       rule: "The public demo environment resets data regularly."
@@ -43,3 +71,7 @@ business_rules:
     generated_data:
       rule: "Generated tests should use unique guest details and future dates."
       guidance: "Avoid relying on today's date, because the public demo can have existing bookings."
+
+    user_roles:
+      rule: "The demo target supports public guest flows and admin flows only."
+      guidance: "Only generate guest or admin tests."

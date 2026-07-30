@@ -1,0 +1,38 @@
+Title: Guest sends a contact message
+
+Description:
+As a guest visitor,
+I want to send a message through the contact form,
+So that I can ask the hotel team a question before making a booking.
+
+Acceptance Criteria:
+- Guest can open the home page.
+- Guest can find the contact form.
+- Guest can enter a name, email address, phone number, subject, and message.
+- Guest can submit the contact form.
+- Guest sees a success confirmation after the message is sent.
+- Contact message should not be submitted when required fields are missing.
+- Invalid email format should show validation feedback.
+
+Test Steps:
+- Navigate to the home page.
+- Locate the contact form.
+- Fill in valid contact details.
+- Submit the contact form.
+- Verify that a success confirmation is displayed.
+- Try submitting the form with missing required fields.
+- Verify that validation feedback is displayed.
+
+Test Data:
+- Name: Jordan Lee
+- Email: jordan.lee@example.com
+- Phone: 07700900456
+- Subject: Question about family rooms
+- Message: Hello, do you have family rooms available with late check-in?
+
+Automation Notes:
+- Use existing Playwright page objects where available.
+- Prefer stable locators.
+- Include concise console.log messages before each major test step.
+- Only guest and admin roles exist in this demo app.
+- Admin credentials exist for admin-only stories only: username admin, password password.

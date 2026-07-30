@@ -55,6 +55,11 @@ export class BookingPage {
   }
 
   async assertLoaded(): Promise<void> {
+    if (this.page.url().includes('/reservation/')) {
+      await expect(this.reserveButton).toBeVisible();
+      return;
+    }
+
     await expect(this.heading).toBeVisible();
   }
 

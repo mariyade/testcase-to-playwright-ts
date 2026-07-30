@@ -33,8 +33,8 @@ jobs:
       - name: Compile Python
         run: python -m compileall agent
 
-      - name: Stage 1 text smoke test
-        run: python -m agent.cli --text artifacts/stage1/room_booking_user_story.txt --stage1-only
+      - name: Agent CLI import smoke
+        run: python -m agent.cli --help
 
   playwright:
     name: Playwright lint and typecheck

@@ -1,64 +1,69 @@
-# Testcase to Playwright TS
+# AI-powered Test Generation Pipeline for Playwright
 
-Python AI automation agent that reads test specifications, retrieves TypeScript
-Playwright context, generates `.spec.ts` tests, evaluates them with LLM-centered
-metrics, and can run Playwright.
+An AI-powered automation framework that converts Jira tickets, GitHub issues or free-text requirements into production-ready Playwright TypeScript tests, including end-to-end, API, visual regression and smoke tests.
 
-This is an original scaffold for a Python-controlled, TypeScript-Playwright
-test generation framework.
+## Background
+
+This project investigates how Retrieval-Augmented Generation (RAG) can be used to generate grounded Playwright automation from software requirements.
+
+Large language models can generate Playwright tests well but they frequently hallucinate page object methods, fixtures, selectors, and business workflows. This project explores whether retrieving project-specific context before generation can significantly improve the quality and reliability of AI-generated test automation.
+
+The agent:
+
+- parses Jira, GitHub or text test requirements into a structured `TestSpec`
+- retrieves the Playwright repo page objects, fixtures, existing tests and project knowledge
+- generates Playwright TypeScript tests through a GPT tool loop
+- evaluates the generated tests against multiple LLM quality metrics
+- regenerates or accepts tests based on the evaluation results
+
 
 ## Table of Contents
 
-- [Pipeline](#pipeline)
+- [Background](#background)
 - [Layout](#layout)
+- [Technology](#technology)
 - [Quick Start](#quick-start)
-- [Input Sources](#input-sources)
+- [Example Workflow](#example-workflow)
 - [Demo Target](#demo-target)
-- [Stage 2 Retrieval](#stage-2-retrieval)
-- [Generate and Evaluate Tests](#generate-and-evaluate-tests)
-- [Run Generated Playwright Tests](#run-generated-playwright-tests)
-
-## Pipeline
-
-1. Parse Jira, GitHub, or text test specifications into a normalized `TestSpec`.
-2. Scan the Playwright repo for page objects, fixtures, existing specs, and rules.
-3. Generate TypeScript Playwright tests through a GPT tool loop.
-4. Evaluate generated tests with LLM metrics and targeted static evidence.
-5. Regenerate, accept, or escalate based on the evaluation report.
-6. Run `npx playwright test`.
+- [Evaluation](#evaluation)
+- [Regression Suites](#regression-suites)
 
 ## Layout
 
 ```text
 agent/
-  models.py
-  config.py
-  stage1_ticket_parser/
-    parser.py
-    jira.py
-    github.py
-    text.py
-    llm.py
-  stage2_context_retrieval/
-    chunker.py
-    indexer.py
-    retriever.py
-  stage3_generator/
-  stage4_eval/
-  stage5_runner/
-  knowledge/
+├── stage1_ticket_parser/
+├── stage2_context_retrieval/
+├── stage3_generator/
+├── stage4_eval/
+├── stage5_runner/
+└── knowledge/
 
 playwright/
-  package.json
-  playwright.config.ts
-  pages/
-  fixtures/
-  tests/generated/
+├── pages/
+├── fixtures/
+├── tests/
+│   └── generated/
+└── playwright.config.ts
 ```
 
-Knowledge files are written consistently as YAML so rules, roles, page mappings,
-navigation flows, and generation standards can all be scanned into the agent
-context in one predictable format.
+## Technology
+
+**AI**
+- OpenAI GPT
+- Retrieval-Augmented Generation (RAG)
+- DeepEval
+
+**Backend**
+- Python
+- Pydantic
+- ChromaDB
+- Sentence Transformers
+
+**Test Automation**
+- Playwright
+- TypeScript
+- Node.js
 
 ## Quick Start
 
@@ -69,7 +74,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-For Playwright dependencies:
+For Playwright tests:
 
 ```bash
 cd playwright
@@ -77,16 +82,79 @@ npm install
 npx playwright install
 ```
 
-## Input Sources
+## Example Workflow
 
-Stage 1 can read ticket specifications from Jira JSON, GitHub issues, or text/URL sources:
+Generate Playwright tests directly from a user story from a text file:
 
 ```bash
-python -m agent.cli --jira path/to/jira-issue.json
-python -m agent.cli --jira path/to/jira-issue.json --stage1-only --save-spec artifacts/stage1/jira_issue_spec.json
-python -m agent.cli --jira "https://your-domain.atlassian.net/rest/api/3/issue/KEY-123" --stage1-only --save-spec artifacts/stage1/jira_KEY-123.json
-python -m agent.cli --github https://github.com/midnightntwrk/midnight-indexer/issues/1253 --stage1-only
-python -m agent.cli --text artifacts/stage1/room_booking_user_story.txt
+.venv/bin/python -m agent.cli \
+  --text test_specs/text/contact_form_user_story.txt \
+  --save-spec artifacts/stage1/contact_form_user_story_spec.json
+```
+
+Run one Jira ticket URL:
+
+```bash
+.venv/bin/python -m agent.cli \
+  --jira "https://your-domain.atlassian.net/rest/api/3/issue/KEY-123" \
+  --save-spec artifacts/stage1/KEY-123_spec.json
+```
+
+Run one GitHub issue URL:
+
+```bash
+.venv/bin/python -m agent.cli \
+  --github "https://github.com/owner/repo/issues/123" \
+  --save-spec artifacts/stage1/github_123_spec.json
+```
+
+For multiple Jira tickets, add multiple Jira ticket URLs:
+
+```text
+test_specs/jira/tickets.txt
+```
+
+Then run the loop script. For Stage 1 parsing only:
+
+```bash
+bash scripts/run_jira_tickets.sh --stage1-only
+```
+
+For full test generation and evaluation:
+
+```bash
+bash scripts/run_jira_tickets.sh
+```
+
+Stage 4 uses a quick two-metric evaluation by default to reduce OpenAI rate-limit
+pressure. Run the full metric suite only when needed:
+
+```bash
+bash scripts/run_jira_tickets.sh --full-eval
+```
+
+For full test generation without Stage 4 LLM evaluation:
+
+```bash
+bash scripts/run_jira_tickets.sh --skip-eval
+```
+
+For multiple GitHub issues, add one URL per line:
+
+```text
+test_specs/github/issues.txt
+```
+
+Then run Stage 1 parsing only:
+
+```bash
+bash scripts/run_github_issues.sh --stage1-only
+```
+
+Or full generation and evaluation:
+
+```bash
+bash scripts/run_github_issues.sh
 ```
 
 Use `--stage1-only` to inspect the normalized `TestSpec` without running
@@ -113,110 +181,53 @@ UI  -> https://automationintesting.online/
 API -> https://automationintesting.online/api
 ```
 
-The project includes a sample room-booking story:
-
-```bash
-python -m agent.cli \
-  --text artifacts/stage1/room_booking_user_story.txt \
-  --stage1-only \
-  --save-spec artifacts/stage1/room_booking_user_story_spec.json
-```
-
-Run retrieval only:
-
-```bash
-python -m agent.cli \
-  --text artifacts/stage1/room_booking_user_story.txt \
-  --retrieve-context
-```
-
-Run the checked-in UI plus API example:
-
-```bash
-npm --prefix playwright test tests/examples/booking.spec.ts
-```
-
-## Stage 2 Retrieval
-
-Stage 2 builds a grounded local context index from the Playwright project before
-test generation. It indexes three collections:
+Generated specs are written to:
 
 ```text
-code_index  -> page objects and fixtures
-test_index  -> existing example specs
-know_index  -> YAML knowledge files
+playwright/tests/generated/e2e/
+playwright/tests/generated/visual/
+playwright/tests/generated/api/
 ```
 
-Build or refresh the index after changing page objects, fixtures, tests, or
-knowledge:
+## Evaluation
+
+Generated tests are evaluated using multiple LLM-based metrics, including:
+
+- Page Object Hallucination
+- Fixture Accuracy
+- Playwright Convention Adherence
+- Specification Coverage
+- Assertion Quality
+- Flow Order Validation
+- Business Rule Compliance
+
+Retrieval quality is evaluated separately using DeepEval to measure context relevance and generation faithfulness.
+
+## Regression Suites
+
+Run regression automation in this order:
 
 ```bash
-python -m agent.cli --build-index
+npm --prefix playwright run test:smoke
+npm --prefix playwright run test:regression:visual
+npm --prefix playwright run test:regression:e2e
 ```
 
-Search the index while debugging:
+Or run the ordered suite:
 
 ```bash
-python -m agent.cli --search-index "room booking API confirmation guest dates"
+npm --prefix playwright run test:regression
 ```
 
-Parse Stage 1 and retrieve Stage 2 context without generating code:
-
-```bash
-python -m agent.cli \
-  --text artifacts/stage1/room_booking_user_story.txt \
-  --retrieve-context
-```
-
-The current implementation uses deterministic local chunking plus real embedding
-retrieval with `sentence-transformers` and ChromaDB:
+Visual regression covers the main responsive breakpoints:
 
 ```text
-embedding model -> all-MiniLM-L6-v2
-vector store    -> agent/vector_store/chroma/
-debug fallback  -> agent/vector_store/stage2_index.json
+desktop -> 1440x900
+tablet  -> 768x1024
+mobile  -> 390x844
 ```
 
-If ChromaDB, sentence-transformers, or the local embedding model cache is not
-available, Stage 2 falls back to deterministic lexical search over
-`stage2_index.json` instead of breaking the pipeline.
+Animations and transitions are disabled during screenshot capture to produce deterministic visual baselines.
 
-## Generate and Evaluate Tests
-
-Run the full pipeline from a source spec:
-
-```bash
-export OPENAI_API_KEY="your-api-key"
-
-python -m agent.cli \
-  --text artifacts/stage1/room_booking_user_story.txt
-```
-
-That runs Stage 1 parsing, Stage 2 retrieval, Stage 3 TypeScript generation,
-and Stage 4 evaluation. Generated specs are written to:
-
-```text
-playwright/tests/generated/
-```
-
-Use `--dry-run` to print the generated TypeScript without writing the spec file.
-
-## Run Generated Playwright Tests
-
-Run all generated tests:
-
-```bash
-npm --prefix playwright test tests/generated
-```
-
-Run the checked-in booking example:
-
-```bash
-npm --prefix playwright test tests/examples/booking.spec.ts
-```
-
-Run with the browser visible:
-
-```bash
-npm --prefix playwright test tests/examples/booking.spec.ts -- --headed
-```
+Keep screenshot baselines on one OS. In CI, prefer Docker/Linux so font
+rendering does not vary between macOS, Windows, and Linux.

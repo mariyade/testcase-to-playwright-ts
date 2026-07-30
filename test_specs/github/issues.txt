@@ -1,0 +1,7 @@
+# Add one GitHub issue per line.
+# You can paste full GitHub issue URLs or local GitHub issue JSON files.
+#
+# https://github.com/owner/repo/issues/42
+# test_specs/github/sample_availability_issue.json
+
+test_specs/github/sample_availability_issue.json

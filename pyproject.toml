@@ -8,3 +8,8 @@ ignore = ["B008", "E501"]
 
 [tool.ruff.format]
 quote-style = "double"
+
+[tool.pytest.ini_options]
+markers = [
+    "evaluation: LLM/RAG evaluation tests that may call external model providers",
+]
