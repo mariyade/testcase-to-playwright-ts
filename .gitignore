@@ -28,10 +28,11 @@ env/
 
 # Agent/runtime artifacts
 .deepeval/
+evaluation_results/
 agent/vector_store/
-artifacts/**/*.tmp
-
+artifacts
 # Playwright / Node
+#playwright
 playwright/node_modules
 playwright/test-results/
 playwright/playwright-report/

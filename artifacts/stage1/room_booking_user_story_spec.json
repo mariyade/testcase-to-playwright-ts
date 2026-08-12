@@ -23,8 +23,6 @@
     {
       "id": "TC_001",
       "title": "guest_opens_home_page_and_finds_contact_form",
-      "priority": "High",
-      "type": "Smoke",
       "preconditions": [],
       "steps": [
         "Navigate to the home page.",
@@ -40,8 +38,6 @@
     {
       "id": "TC_002",
       "title": "guest_submits_contact_form_with_valid_details",
-      "priority": "Critical",
-      "type": "Smoke",
       "preconditions": [
         "Contact form is visible on the home page."
       ],
@@ -59,8 +55,6 @@
     {
       "id": "TC_003",
       "title": "guest_submits_contact_form_with_missing_required_fields",
-      "priority": "High",
-      "type": "Regression",
       "preconditions": [
         "Contact form is visible on the home page."
       ],
@@ -77,8 +71,6 @@
     {
       "id": "TC_004",
       "title": "guest_submits_contact_form_with_invalid_email_format",
-      "priority": "High",
-      "type": "Regression",
       "preconditions": [
         "Contact form is visible on the home page."
       ],

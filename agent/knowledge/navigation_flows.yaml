@@ -1,96 +1,39 @@
 navigation_flows:
-  home_page:
-    url: "https://automationintesting.online/"
-    entry_points:
-      - Direct URL navigation
-    key_sections:
-      - Welcome hero
-      - Check availability form
-      - Room cards
-      - Location
-      - Contact form
-    expected_initial_state:
-      - Shady Meadows B&B heading is visible.
-      - Room cards are visible.
-      - Contact form is visible.
-    fixture: booking_page
-
-  room_listing:
-    starts_from: home_page
+  browse_rooms:
+    user_type: "guest"
+    starts_from: "/"
     steps:
-      - Open the home page.
-      - Scroll or navigate to the Rooms section.
-      - Review room cards and prices.
+      - "Open the home page."
+      - "Review the Our Rooms section."
     assertions:
-      - Book now links are visible for available rooms.
-      - Room types such as Single, Double, or Suite are visible.
-      - Single room shows TV, WiFi, Safe, and £100 per night.
-      - Double room shows TV, Radio, Safe, and £150 per night.
-      - Suite room shows Radio, WiFi, Safe, and £225 per night.
-    fixture: booking_page
-
-  check_availability:
-    starts_from: home_page
-    steps:
-      - Open the home page.
-      - Enter check-in and check-out dates.
-      - Submit Check Availability & Book Your Stay.
-      - Review available room cards.
-    assertions:
-      - Our Rooms section remains visible.
-      - Matching room cards remain available for booking.
-    fixture: booking_page
-
-  reservation_page:
-    url: "https://automationintesting.online/reservation/{room_id}?checkin={yyyy-mm-dd}&checkout={yyyy-mm-dd}"
-    entry_points:
-      - Direct URL navigation
-      - Home page room card Book now link
-    key_sections:
-      - Room details
-      - Calendar/date selection
-      - Price summary
-      - Reserve Now action
-    fixture: booking_page
+      - "Room cards are visible."
+      - "Room prices and facilities are visible when provided by the requirement."
 
   create_booking:
-    starts_from: reservation_page
+    user_type: "guest"
+    starts_from: "/reservation/{roomId}"
     steps:
-      - Open reservation page with room id and future check-in/check-out dates.
-      - Click Reserve Now.
-      - Enter guest first name, last name, email, and phone.
-      - Submit the reservation.
-    api_calls:
-      - "POST /api/booking"
+      - "Open the reservation page for a room and date range."
+      - "Open the reservation form."
+      - "Fill guest details."
+      - "Submit the booking."
     assertions:
-      - POST /api/booking returns 201 with numeric bookingid.
-      - UI shows Booking Confirmed.
-      - POST /api/booking response matches guest name and booking dates.
-    fixture: booking_page
+      - "Booking API responds successfully."
+      - "Booking confirmation is displayed."
 
-  contact_message:
-    starts_from: home_page
+  send_contact_message:
+    user_type: "guest"
+    starts_from: "/"
     steps:
-      - Open the home page.
-      - Fill contact form fields.
-      - Submit the message.
-    api_calls:
-      - "POST /api/message"
+      - "Open the home page."
+      - "Fill the contact form."
+      - "Submit the contact form."
     assertions:
-      - Success message or confirmation is visible.
-    fixture: booking_page
+      - "A success or validation message is shown according to the submitted data."
 
   admin_rooms_dashboard:
-    url: "https://automationintesting.online/admin"
-    entry_points:
-      - Direct admin URL navigation
-    steps:
-      - Open the admin login page.
-      - Log in with username admin and password password.
-      - Review the admin dashboard navigation.
-      - Review the rooms table.
+    user_type: "admin"
+    starts_from: "/admin"
     assertions:
-      - Restful Booker Platform Demo heading is visible.
-      - Rooms, Report, Branding, Messages, and Front Page navigation is visible.
-      - Messages shows count 5.
-      - Rooms 101, 102, and 103 are visible with type, accessibility, price, and details.
+      - "Admin dashboard is visible after login."
+      - "Room records and admin navigation are visible."

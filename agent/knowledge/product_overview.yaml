@@ -1,0 +1,18 @@
+product:
+  name: "Restful Booker Platform Demo"
+  category: "hotel booking demo application"
+  purpose: "Let guests browse rooms, create bookings, and send contact messages while admins review room information."
+  access_model:
+    guest: "Public room browsing, booking, and contact form flows."
+    admin: "Admin dashboard access when credentials are explicitly provided."
+
+domain_terms:
+  room: "Bookable accommodation unit with type, facilities, accessibility, and price."
+  booking: "Guest reservation for a room and date range."
+  contact_message: "Guest message sent through the public contact form."
+
+core_risks:
+  - "Booking creation must submit complete guest and date details."
+  - "Confirmation must match the created booking."
+  - "Contact form validation must prevent invalid submissions."
+  - "Admin-only flows must not be tested without supplied credentials and page-object support."

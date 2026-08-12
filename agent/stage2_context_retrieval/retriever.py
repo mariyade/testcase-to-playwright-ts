@@ -16,15 +16,46 @@ from agent.stage2_context_retrieval.indexer import (
 TOKEN_RE = re.compile(r"[a-zA-Z][a-zA-Z0-9_]+")
 
 
+# Build a broad query from the full TestSpec and retrieve the most relevant chunks.
+# This is the normal Stage 2 retrieval path used before Stage 3 generation.
 def retrieve_context(spec: TestSpec, vector_store_dir: Path, top_k: int = 12) -> RetrievalResult:
     query = _query_from_spec(spec)
+    return _retrieve_from_index(query, vector_store_dir, top_k, COLLECTIONS)
+
+
+# Search the Stage 2 index with an explicit query.
+# Tools and evals can restrict this to code, test, or knowledge collections.
+def search_index(
+    query: str,
+    vector_store_dir: Path,
+    top_k: int = 10,
+    collections: tuple[str, ...] | None = None,
+) -> RetrievalResult:
+    return _retrieve_from_index(query, vector_store_dir, top_k, collections or COLLECTIONS)
+
+
+# Try semantic Chroma retrieval first.
+# If it is unavailable or empty, use the saved JSON index with lexical scoring.
+def _retrieve_from_index(
+    query: str,
+    vector_store_dir: Path,
+    top_k: int,
+    collections: tuple[str, ...],
+) -> RetrievalResult:
     if chroma_available():
-        result = _retrieve_chroma(query, vector_store_dir, top_k)
+        result = _retrieve_chroma(query, vector_store_dir, top_k, collections)
         if result.chunks:
             return result
 
-    chunks = load_index(vector_store_dir)
+    all_chunks = load_index(vector_store_dir)
+    chunks = [chunk for chunk in all_chunks if chunk.collection in collections]
     if not chunks:
+        if all_chunks:
+            collection_names = ", ".join(collections)
+            return RetrievalResult(
+                query=query,
+                warnings=[f"No Stage 2 chunks found in selected collections: {collection_names}"],
+            )
         return RetrievalResult(
             query=query, warnings=[f"No Stage 2 index found in {vector_store_dir}"]
         )
@@ -35,27 +66,17 @@ def retrieve_context(spec: TestSpec, vector_store_dir: Path, top_k: int = 12) ->
         reverse=True,
     )
     selected = [chunk for score, chunk in scored if score > 0][:top_k]
-    warnings = _warnings(selected)
-    return RetrievalResult(query=query, chunks=selected, warnings=warnings)
-
-
-def search_index(query: str, vector_store_dir: Path, top_k: int = 10) -> RetrievalResult:
-    if chroma_available():
-        result = _retrieve_chroma(query, vector_store_dir, top_k)
-        if result.chunks:
-            return result
-
-    chunks = load_index(vector_store_dir)
-    scored = sorted(
-        ((score_chunk(query, chunk), chunk) for chunk in chunks),
-        key=lambda item: item[0],
-        reverse=True,
-    )
-    selected = [chunk for score, chunk in scored if score > 0][:top_k]
     return RetrievalResult(query=query, chunks=selected, warnings=_warnings(selected))
 
 
-def _retrieve_chroma(query: str, vector_store_dir: Path, top_k: int) -> RetrievalResult:
+# Embed the query locally and search the selected Chroma collections.
+# Returned Chroma metadata is converted back into CodeChunk objects.
+def _retrieve_chroma(
+    query: str,
+    vector_store_dir: Path,
+    top_k: int,
+    collections: tuple[str, ...],
+) -> RetrievalResult:
     try:
         import chromadb
         from sentence_transformers import SentenceTransformer
@@ -73,8 +94,8 @@ def _retrieve_chroma(query: str, vector_store_dir: Path, top_k: int) -> Retrieva
 
     chunks: list[CodeChunk] = []
     warnings: list[str] = []
-    per_collection = max(1, top_k // len(COLLECTIONS) + 1)
-    for collection_name in COLLECTIONS:
+    per_collection = max(1, top_k // len(collections) + 1)
+    for collection_name in collections:
         collection = client.get_or_create_collection(collection_name)
         if collection.count() == 0:
             continue
@@ -83,15 +104,15 @@ def _retrieve_chroma(query: str, vector_store_dir: Path, top_k: int) -> Retrieva
             n_results=min(per_collection, collection.count()),
             include=["documents", "metadatas", "distances"],
         )
-        documents = result.get("documents", [[]])[0]
-        metadatas = result.get("metadatas", [[]])[0]
-        ids = result.get("ids", [[]])[0]
-        distances = result.get("distances", [[]])[0]
         for chunk_id, document, metadata, distance in zip(
-            ids, documents, metadatas, distances, strict=False
+            result.get("ids", [[]])[0],
+            result.get("documents", [[]])[0],
+            result.get("metadatas", [[]])[0],
+            result.get("distances", [[]])[0],
+            strict=False,
         ):
             chunk_metadata = {str(key): str(value) for key, value in (metadata or {}).items()}
-            collection = chunk_metadata.pop("collection", "")
+            collection_name = chunk_metadata.pop("collection", "")
             chunk_type = chunk_metadata.pop("chunk_type", "")
             filepath = Path(chunk_metadata.pop("filepath", ""))
             symbol = chunk_metadata.pop("symbol", "")
@@ -99,7 +120,7 @@ def _retrieve_chroma(query: str, vector_store_dir: Path, top_k: int) -> Retrieva
             chunks.append(
                 CodeChunk(
                     id=chunk_id,
-                    collection=collection,
+                    collection=collection_name,
                     chunk_type=chunk_type,
                     filepath=filepath,
                     symbol=symbol,
@@ -115,13 +136,14 @@ def _retrieve_chroma(query: str, vector_store_dir: Path, top_k: int) -> Retrieva
     return RetrievalResult(query=query, chunks=chunks, warnings=warnings)
 
 
+# Calculate a simple token-overlap score for fallback retrieval.
+# Code and knowledge chunks get small boosts because they are usually most useful.
 def score_chunk(query: str, chunk: CodeChunk) -> float:
-    query_terms = Counter(_tokens(query))
+    query_terms = Counter(token.lower() for token in TOKEN_RE.findall(query))
     if not query_terms:
         return 0.0
-    text_terms = Counter(
-        _tokens(" ".join([chunk.symbol, chunk.text, " ".join(chunk.metadata.values())]))
-    )
+    chunk_text = " ".join([chunk.symbol, chunk.text, " ".join(chunk.metadata.values())])
+    text_terms = Counter(token.lower() for token in TOKEN_RE.findall(chunk_text))
     if not text_terms:
         return 0.0
     overlap = sum(min(count, text_terms[token]) for token, count in query_terms.items())
@@ -129,13 +151,13 @@ def score_chunk(query: str, chunk: CodeChunk) -> float:
         sum(count * count for count in text_terms.values())
     )
     boost = 1.0
-    if chunk.collection == "code_index":
-        boost += 0.25
-    if chunk.collection == "know_index":
-        boost += 0.15
+    boost += 0.25 if chunk.collection == "code_index" else 0.0
+    boost += 0.15 if chunk.collection == "know_index" else 0.0
     return (overlap / norm) * boost if norm else 0.0
 
 
+# Flatten the TestSpec into one text query for retrieval.
+# It includes story-level context and every extracted test-case detail.
 def _query_from_spec(spec: TestSpec) -> str:
     parts = [
         spec.title,
@@ -144,34 +166,30 @@ def _query_from_spec(spec: TestSpec) -> str:
         " ".join(spec.affected_pages),
         " ".join(spec.user_types),
     ]
-    for test_case in spec.test_cases:
-        parts.extend(
-            [
-                test_case.title,
-                " ".join(test_case.preconditions),
-                " ".join(test_case.steps),
-                test_case.expected_result,
-                " ".join(test_case.tags),
-            ]
+    parts.extend(
+        part
+        for test_case in spec.test_cases
+        for part in (
+            test_case.title,
+            " ".join(test_case.preconditions),
+            " ".join(test_case.steps),
+            test_case.expected_result,
+            " ".join(test_case.tags),
         )
-    return "\n".join(part for part in parts if part)
+    )
+    return "\n".join(filter(None, parts))
 
 
-def _tokens(text: str) -> list[str]:
-    return [token.lower() for token in TOKEN_RE.findall(text)]
-
-
+# Surface possible ambiguity when two retrieved files define the same symbol.
+# This helps explain confusing retrieval context without failing the pipeline.
 def _warnings(chunks: list[CodeChunk]) -> list[str]:
     warnings: list[str] = []
     seen_symbols: dict[str, Path] = {}
     for chunk in chunks:
-        if (
-            chunk.symbol
-            and chunk.symbol in seen_symbols
-            and seen_symbols[chunk.symbol] != chunk.filepath
-        ):
+        existing_path = seen_symbols.get(chunk.symbol)
+        if chunk.symbol and existing_path and existing_path != chunk.filepath:
             warnings.append(
-                f"Potential duplicate symbol {chunk.symbol} in {seen_symbols[chunk.symbol]} and {chunk.filepath}"
+                f"Potential duplicate symbol {chunk.symbol} in {existing_path} and {chunk.filepath}"
             )
         seen_symbols[chunk.symbol] = chunk.filepath
     return warnings

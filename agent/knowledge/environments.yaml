@@ -1,0 +1,13 @@
+environments:
+  demo:
+    ui_base_url: "https://automationintesting.online"
+    api_base_url: "https://automationintesting.online/api"
+
+  local:
+    ui_base_url: "Use BASE_URL when running against a local copy."
+    api_base_url: "Use BOOKING_API_URL when overriding the booking API."
+
+runtime:
+  optional_env_vars:
+    - "BASE_URL"
+    - "BOOKING_API_URL"

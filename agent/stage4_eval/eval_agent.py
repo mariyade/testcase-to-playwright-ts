@@ -7,7 +7,10 @@ from agent.stage4_eval.metrics import evaluate_all_metrics
 from agent.stage4_eval.models import EvalReport
 
 
+# Runtime Stage 4 wrapper used by the CLI after Stage 3 writes generated specs.
 class Stage4EvalAgent:
+    # Evaluate one generated spec file against the Stage 1 spec and Stage 2 context.
+    # Missing files become report issues instead of crashing the CLI.
     def evaluate(
         self, filepath: str | Path, spec: TestSpec, context: RepoContext, full: bool = False
     ) -> EvalReport:

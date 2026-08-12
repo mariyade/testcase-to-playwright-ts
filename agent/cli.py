@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 
 from agent.config import AgentConfig
@@ -16,10 +17,6 @@ def main() -> None:
         "--build-index",
         action="store_true",
         help="Stage 2 utility: rebuild the retrieval index",
-    )
-    utilities.add_argument(
-        "--search-index",
-        help="Stage 2 utility: search the retrieval index without generating tests",
     )
 
     source = parser.add_mutually_exclusive_group()
@@ -44,9 +41,17 @@ def main() -> None:
         help="Skip Stage 4 LLM evaluation after writing generated tests",
     )
     parser.add_argument(
-        "--full-eval",
+        "--quick-eval",
         action="store_true",
-        help="Run the full Stage 4 LLM metric suite instead of the quick default",
+        help="Run only the quick Stage 4 LLM metric subset",
+    )
+    parser.add_argument(
+        "--eval-file",
+        help="Stage 4 only: evaluate an existing generated Playwright spec file",
+    )
+    parser.add_argument(
+        "--spec",
+        help="Path to a saved Stage 1 TestSpec JSON for --eval-file",
     )
     args = parser.parse_args()
 
@@ -58,8 +63,16 @@ def main() -> None:
         _build_stage2_index(config, knowledge_dir, vector_store_dir)
         return
 
-    if args.search_index:
-        _search_stage2_index(args.search_index, vector_store_dir)
+    if args.eval_file:
+        if not args.spec:
+            parser.error("--spec is required with --eval-file")
+        _evaluate_existing_file(
+            Path(args.eval_file),
+            Path(args.spec),
+            knowledge_dir,
+            vector_store_dir,
+            full_eval=not args.quick_eval,
+        )
         return
 
     spec = _parse_stage1_spec(args, parser)
@@ -78,7 +91,7 @@ def main() -> None:
         vector_store_dir,
         dry_run=args.dry_run,
         skip_eval=args.skip_eval,
-        full_eval=args.full_eval,
+        full_eval=not args.quick_eval,
     )
 
 
@@ -92,7 +105,6 @@ def _build_stage2_index(config: AgentConfig, knowledge_dir: Path, vector_store_d
     chunks = build_index(config.playwright_path(), knowledge_dir, vector_store_dir)
     print(f"Built Stage 2 index: {vector_store_dir}")
     print(f"Chunks: {len(chunks)}")
-    print(f"Collections: {', '.join(sorted({chunk.collection for chunk in chunks}))}")
     if chroma_available():
         counts = collection_counts(vector_store_dir)
         print("Backend: ChromaDB + sentence-transformers")
@@ -103,43 +115,47 @@ def _build_stage2_index(config: AgentConfig, knowledge_dir: Path, vector_store_d
         print("Install chromadb and sentence-transformers to enable embedding retrieval.")
 
 
-def _search_stage2_index(query: str, vector_store_dir: Path) -> None:
-    from agent.stage2_context_retrieval.retriever import search_index
-
-    result = search_index(query, vector_store_dir)
-    print(f"Query: {result.query[:300]}")
-    if result.warnings:
-        print("Warnings:")
-        for warning in result.warnings:
-            print(f"- {warning}")
-    if not result.chunks:
-        print("No matching chunks found.")
-        return
-
-    print("Retrieved chunks:")
-    for index, chunk in enumerate(result.chunks, start=1):
-        print(f"{index}. [{chunk.collection}] {chunk.symbol} ({chunk.filepath})")
-        preview = " ".join(chunk.text.split())[:220]
-        print(f"   {preview}")
-
-
 def _parse_stage1_spec(args: argparse.Namespace, parser: argparse.ArgumentParser) -> TestSpec:
     from agent.stage1_ticket_parser.parser import parse_ticket_source
 
-    if args.jira:
-        return parse_ticket_source("jira", args.jira)
-    if args.github:
-        return parse_ticket_source("github", args.github)
-    if args.text:
-        return parse_ticket_source("text", args.text)
+    sources = {"jira": args.jira, "github": args.github, "text": args.text}
 
-    parser.error("one of --jira, --github, --text, --build-index, or --search-index is required")
+    for source, value in sources.items():
+        if value:
+            return parse_ticket_source(source, value)
+
+    parser.error("one of --jira, --github, --text, or --build-index is required")
 
 
 def _save_stage1_spec(spec: TestSpec, output_path: Path) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(spec.model_dump_json(indent=2), encoding="utf-8")
     print(f"Saved Stage 1 spec: {output_path}")
+
+
+def _evaluate_existing_file(
+    eval_file: Path,
+    spec_path: Path,
+    knowledge_dir: Path,
+    vector_store_dir: Path,
+    full_eval: bool,
+) -> None:
+    from agent.stage2_context_retrieval.scanner import scan_playwright_repo_with_retrieval
+    from agent.stage4_eval.eval_agent import Stage4EvalAgent
+
+    config = AgentConfig.load()
+    spec = TestSpec.model_validate_json(spec_path.read_text(encoding="utf-8"))
+    context = scan_playwright_repo_with_retrieval(
+        config.playwright_path(), knowledge_dir, vector_store_dir, spec
+    )
+    report = Stage4EvalAgent().evaluate(eval_file, spec, context, full=full_eval)
+    report_path = _save_eval_report(report, config.project_root)
+
+    print(f"Evaluated: {eval_file}")
+    print(f"Evaluation report: {report_path}")
+    print(f"Score: {report.overall_score} Recommendation: {report.recommendation.value}")
+    for issue in report.issues:
+        print(f"- {issue}")
 
 
 def _generate_and_evaluate(
@@ -160,14 +176,10 @@ def _generate_and_evaluate(
     context = scan_playwright_repo_with_retrieval(
         config.playwright_path(), knowledge_dir, vector_store_dir, spec
     )
-
     # Stage 3: generate Playwright tests from the TestSpec and Stage 2 context.
     generation = Stage3GeneratorAgent(config).generate(spec, context, dry_run=dry_run)
     if not generation.success:
         raise SystemExit(generation.error)
-
-    if generation.missing_methods_filepath:
-        print(f"Missing page-object methods: {generation.missing_methods_filepath}")
 
     if dry_run or not generation.files:
         print(generation.code)
@@ -176,19 +188,27 @@ def _generate_and_evaluate(
     if skip_eval:
         for generated_file in generation.files:
             print(f"Generated: {generated_file.path}")
-            print(f"Type: {generated_file.test_type}")
         print("Skipped Stage 4 evaluation")
         return
-
     # Stage 4: evaluate every generated file.
     evaluator = Stage4EvalAgent()
     for generated_file in generation.files:
         report = evaluator.evaluate(generated_file.path, spec, context, full=full_eval)
+        report_path = _save_eval_report(report, config.project_root)
         print(f"Generated: {generated_file.path}")
-        print(f"Type: {generated_file.test_type}")
+        print(f"Evaluation report: {report_path}")
         print(f"Score: {report.overall_score} Recommendation: {report.recommendation.value}")
         for issue in report.issues:
             print(f"- {issue}")
+
+
+def _save_eval_report(report, project_root: Path) -> Path:
+    source_path = Path(report.filepath)
+    report_dir = project_root / "evaluation_results" / "stage4"
+    report_dir.mkdir(parents=True, exist_ok=True)
+    report_path = report_dir / f"{source_path.stem}.eval.json"
+    report_path.write_text(json.dumps(report.to_json_dict(), indent=2) + "\n", encoding="utf-8")
+    return report_path
 
 
 if __name__ == "__main__":

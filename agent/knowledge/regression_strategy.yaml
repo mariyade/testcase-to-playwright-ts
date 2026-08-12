@@ -1,32 +1,30 @@
-regression_e2e:
-  generated_test_rules:
-    - "Use Playwright test details syntax for tags, for example test('name', { tag: '@smoke' }, async (...) => {})."
-    - "Tag smoke tests with { tag: '@smoke' }."
-    - "Tag broader regression E2E tests with { tag: '@e2e' }."
-    - "Use existing page-object methods and stable fixtures."
-    - "Avoid hard waits and implementation-detail selectors."
+regression:
+  api_health_checks:
+    - "POST /api/booking"
+    - "GET /api/booking/{bookingId}"
+    - "POST /api/message"
 
-regression_visual:
-  purpose: "Detect unintended UI changes after the app is known to be in a valid state."
-  breakpoints:
-    desktop: "1440x900"
-    tablet: "768x1024"
-    mobile: "390x844"
-  checks:
-    - "Screenshots"
-    - "Horizontal overflow"
-    - "Responsive behaviour"
-    - "Clipping"
-    - "Layout stability"
-    - "Spacing"
-    - "Font rendering"
-    - "Dark mode when supported"
-    - "RTL when supported"
-  environment:
-    - "Take and compare snapshots on one OS only."
-  generated_test_rules:
-    - "Tag visual tests with { tag: '@visual' }."
-    - "Generate visual tests only when the story mentions visual, layout, responsive behaviour, card browsing, overflow, clipping, spacing, font rendering, dark mode, or RTL concerns."
-    - "Use the shared Playwright toHaveScreenshot stylePath for screenshot-specific stabilization."
-    - "Do not update screenshots or snapshot baselines from generated code."
-    - "Keep screenshots deterministic and avoid masking real layout problems."
+  e2e_core_flows:
+    - "Guest can browse room cards."
+    - "Guest can create a room booking with valid details."
+    - "Guest can send a contact message."
+    - "Guest receives validation feedback for invalid form input."
+    - "Admin can view the rooms dashboard when credentials are supplied."
+
+  visual:
+    breakpoints:
+      desktop: "1440x900"
+      tablet: "768x1024"
+      mobile: "390x844"
+    run_when:
+      - "Story mentions visual, layout, responsive behaviour, overflow, clipping, spacing, fonts, dark mode, or RTL."
+
+generated_test_rules:
+  tags:
+    smoke: "{ tag: '@smoke' }"
+    e2e: "{ tag: '@e2e' }"
+    visual: "{ tag: '@visual' }"
+  avoid:
+    - "Hard waits."
+    - "Updating screenshot baselines from generated code."
+    - "Inventing admin credentials unless the requirement provides them."

@@ -12,9 +12,11 @@ from agent.stage2_context_retrieval.retriever import search_index
 from agent.stage2_context_retrieval.scanner import scan_playwright_repo_with_retrieval
 from agent.stage3_generator.generator_agent import Stage3GeneratorAgent
 
+# Repository root used by eval helpers to resolve golden metadata paths.
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
+# Load newline-delimited JSON golden rows for the DeepEval RAG tests.
 def load_json_rows(relative_path: str) -> list[dict[str, Any]]:
     path = Path(__file__).parent / relative_path
     rows: list[dict[str, Any]] = []
@@ -24,6 +26,7 @@ def load_json_rows(relative_path: str) -> list[dict[str, Any]]:
     return rows
 
 
+# Retrieve Stage 2 chunks as plain strings for DeepEval retrieval-context metrics.
 def retrieved_context(query: str, top_k: int = 8) -> list[str]:
     config = AgentConfig()
     vector_store_dir = config.project_root / "agent" / "vector_store"
@@ -45,24 +48,13 @@ def retrieved_context(query: str, top_k: int = 8) -> list[str]:
     ]
 
 
+# Return saved generated code when available, otherwise generate it for the golden.
 def generated_output(metadata: dict[str, Any]) -> str:
     generated_file = metadata.get("generated_file")
     if generated_file:
         generated_path = PROJECT_ROOT / generated_file
         if generated_path.exists():
-            code = generated_path.read_text(encoding="utf-8")
-            missing_methods_file = metadata.get("missing_methods_file")
-            if missing_methods_file:
-                missing_methods_path = PROJECT_ROOT / missing_methods_file
-                if missing_methods_path.exists():
-                    return "\n\n".join(
-                        [
-                            code,
-                            "# Missing page-object methods",
-                            missing_methods_path.read_text(encoding="utf-8"),
-                        ]
-                    )
-            return code
+            return generated_path.read_text(encoding="utf-8")
 
     if not os.getenv("OPENAI_API_KEY"):
         msg = "OPENAI_API_KEY is required when no generated_file is provided"
@@ -78,13 +70,4 @@ def generated_output(metadata: dict[str, Any]) -> str:
         spec,
     )
     result = Stage3GeneratorAgent(config).generate(spec, context, dry_run=True)
-    return "\n\n".join(
-        [
-            result.code,
-            "# Missing page-object methods",
-            json.dumps(
-                [method.model_dump(mode="json") for method in result.missing_page_object_methods],
-                indent=2,
-            ),
-        ]
-    )
+    return result.code

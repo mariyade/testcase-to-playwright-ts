@@ -3,16 +3,17 @@ from __future__ import annotations
 from deepeval.metrics import GEval
 from deepeval.test_case import LLMTestCase, LLMTestCaseParams
 
+from agent.config import AgentConfig
 from agent.models import RepoContext, TestSpec
 from agent.stage4_eval.models import MetricResult
 
-EVAL_MODEL = "gpt-4o"
-
+# Metrics used by default to keep normal Stage 4 evaluation cheaper and faster.
 QUICK_METRIC_NAMES = {
     "No Hallucinated Page Methods",
     "Spec Coverage",
 }
 
+# Full DeepEval metric definitions: name, evaluator criteria, and pass threshold.
 METRIC_INPUTS = [
     (
         "No Hallucinated Page Methods",
@@ -81,24 +82,30 @@ METRIC_INPUTS = [
 ]
 
 
+# Run the configured GEval metrics against generated code and repository context.
+# The quick mode uses only the cheapest/highest-signal subset.
 def evaluate_all_metrics(
     code: str, spec: TestSpec, context: RepoContext, full: bool = False
 ) -> list[MetricResult]:
+    config = AgentConfig.load()
     spec_text = spec.model_dump_json(indent=2)
     repo_text = "\n\n".join(
         [
             "Page API:\n" + context.page_api_summary(),
-            "Fixtures:\n" + "\n".join(f"- {fixture.name}" for fixture in context.fixtures),
+            "Repository Contracts:\n" + context.repository_contracts.model_dump_json(indent=2),
+            "Fixtures:\n"
+            + "\n".join(f"- {fixture.name}" for fixture in context.repository_contracts.fixtures),
             "Knowledge:\n" + "\n\n".join(context.knowledge.values()),
         ]
     )
 
     results: list[MetricResult] = []
-    metric_inputs = METRIC_INPUTS if full else _quick_metric_inputs()
+    metric_inputs = (
+        METRIC_INPUTS if full else [item for item in METRIC_INPUTS if item[0] in QUICK_METRIC_NAMES]
+    )
     for name, criteria, threshold in metric_inputs:
         metric = GEval(
             name=name,
-            model=EVAL_MODEL,
             evaluation_params=[
                 LLMTestCaseParams.INPUT,
                 LLMTestCaseParams.ACTUAL_OUTPUT,
@@ -106,6 +113,7 @@ def evaluate_all_metrics(
             ],
             criteria=criteria.strip(),
             threshold=threshold,
+            model=config.deepeval_model,
         )
         test_case = LLMTestCase(input=spec_text, actual_output=code, context=[repo_text])
         try:
@@ -131,7 +139,3 @@ def evaluate_all_metrics(
                 )
             )
     return results
-
-
-def _quick_metric_inputs() -> list[tuple[str, str, float]]:
-    return [item for item in METRIC_INPUTS if item[0] in QUICK_METRIC_NAMES]

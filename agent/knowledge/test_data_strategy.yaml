@@ -1,0 +1,22 @@
+test_data_strategy:
+  guest_details:
+    firstname: "Jordan"
+    lastname: "Lee"
+    email: "jordan.lee@example.com"
+    phone: "07700900456"
+
+  contact_message:
+    name: "Jordan Lee"
+    email: "jordan.lee@example.com"
+    phone: "07700900456"
+    subject: "Question about family rooms"
+    message: "Hello, do you have family rooms available with late check-in?"
+
+  booking:
+    room_id: 102
+    dates: "Use futureBookingDates() helper rather than hard-coded calendar dates."
+
+  constraints:
+    - "Use generated future dates for booking flows."
+    - "Do not use real customer data."
+    - "Do not invent admin credentials unless the requirement provides them."

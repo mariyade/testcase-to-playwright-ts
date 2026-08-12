@@ -4,8 +4,8 @@
 # export JIRA_EMAIL="your-atlassian-email@example.com"
 # export JIRA_API_TOKEN="paste_token_here"
 # export OPENAI_API_KEY="your_openai_key"
+
 #
 # https://your-domain.atlassian.net/rest/api/3/issue/QA-103
 
-https://HIDDEN.atlassian.net/rest/api/3/issue/KAN-1
-https://HIDDEN.atlassian.net/rest/api/3/issue/KAN-2
+# https://your-domain.atlassian.net/rest/api/3/issue/QA-103

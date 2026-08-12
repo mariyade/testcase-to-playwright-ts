@@ -12,4 +12,5 @@ quote-style = "double"
 [tool.pytest.ini_options]
 markers = [
     "evaluation: LLM/RAG evaluation tests that may call external model providers",
+    "tools: deterministic tests for agent tool-calling behavior",
 ]

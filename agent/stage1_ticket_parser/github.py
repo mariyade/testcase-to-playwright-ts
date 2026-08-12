@@ -6,7 +6,8 @@ import re
 from pathlib import Path
 from urllib.request import Request, urlopen
 
-from agent.models import InputSource, TestCase, TestSpec, TestType
+from agent.config import AgentConfig
+from agent.models import InputSource, TestCase, TestSpec
 from agent.stage1_ticket_parser.llm import Stage1ParserAgent
 
 GITHUB_ISSUE_RE = re.compile(r"github\.com/([^/]+)/([^/]+)/issues/(\d+)")
@@ -44,7 +45,7 @@ def read_github_issue_spec(source: str | Path) -> TestSpec:
     )
     labels = [label for label in labels if label]
 
-    if os.getenv("OPENAI_API_KEY"):
+    if AgentConfig.has_agent_llm_config():
         try:
             prompt_text = "\n".join(
                 [
@@ -66,13 +67,17 @@ def read_github_issue_spec(source: str | Path) -> TestSpec:
             return extracted.model_copy(
                 update={"raw_content": json.dumps(issue, indent=2, default=str)}
             )
-        except Exception:
-            pass
+        except Exception as exc:
+            print(f"Stage 1 LLM extraction failed: {type(exc).__name__}: {exc}")
+            raise
 
     acceptance_criteria = _extract_section(
         body, ("acceptance criteria", "acceptance", "criteria", "expected")
     )
-    steps = _extract_section(body, ("steps", "test steps", "reproduction steps", "flow"))
+    steps = _extract_section(body, ("steps", "test steps", "reproduction steps", "flow")) or [
+        f"Perform the behaviour described by: {title}"
+    ]
+    expected_result = "\n".join(acceptance_criteria) or body or title
     affected_pages = []
     for label in labels:
         normalized = label.strip().lower().replace(" ", "_").replace("-", "_")
@@ -90,9 +95,8 @@ def read_github_issue_spec(source: str | Path) -> TestSpec:
             TestCase(
                 id=issue_id,
                 title=title,
-                type=TestType.REGRESSION,
                 steps=steps,
-                expected_result="\n".join(acceptance_criteria),
+                expected_result=expected_result,
                 tags=labels,
             )
         ],

@@ -1,0 +1,5 @@
+external_services:
+  restful_booker_platform:
+    ui: "https://automationintesting.online"
+    api: "https://automationintesting.online/api"
+    note: "Public demo service used for portfolio-safe Playwright examples."

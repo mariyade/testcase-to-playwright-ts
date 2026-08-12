@@ -1,31 +1,17 @@
 user_types:
   guest:
-    description: "Public visitor who can browse rooms, create bookings, and submit contact messages."
-    how_to_test_as: "Open a fresh browser context without logging in."
-    visible_elements:
-      - "Rooms navigation link"
-      - "Booking navigation link"
-      - "Room cards"
-      - "Book now or View Details controls"
-      - "Contact form"
-    assertions:
-      - "Guest can open the home page."
-      - "Guest can view available rooms."
-      - "Guest can submit valid booking details."
+    auth: "none"
+    can:
+      - "View public room information."
+      - "Create a booking when valid room, date, and guest data are provided."
+      - "Submit the public contact form."
+    cannot:
+      - "Access admin-only room management without credentials."
 
   admin:
-    description: "Authenticated staff user who manages application data and back-office workflows."
-    how_to_test_as: "Open /admin and log in with configured admin test credentials."
-    credentials_required:
-      - "username admin"
-      - "password password"
-    additional_access:
-      - "View Rooms"
-      - "View Report"
-      - "View Branding"
-      - "View Messages"
-      - "View Front Page"
-      - "Review bookings"
-    restrictions:
-      - "Admin mutation flows such as create, edit, or delete require an explicit story."
-      - "Do not mix admin flows into guest stories."
+    auth: "username and password when explicitly supplied by the requirement"
+    can:
+      - "View the admin dashboard."
+      - "Review rooms, reports, branding, messages, and front-page admin navigation."
+    constraints:
+      - "Do not create, edit, or delete rooms unless the requirement explicitly asks for mutation."

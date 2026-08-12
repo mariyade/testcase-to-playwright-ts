@@ -1,16 +1,19 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import StrEnum
+from typing import Any
 
 
+# Final action suggested by Stage 4 after metric aggregation.
 class Recommendation(StrEnum):
     ACCEPT = "accept"
     REGENERATE = "regenerate"
     ESCALATE = "escalate"
 
 
+# One DeepEval metric result normalized into the agent's report format.
 @dataclass
 class MetricResult:
     name: str
@@ -20,6 +23,7 @@ class MetricResult:
     issues: list[str] = field(default_factory=list)
 
 
+# Saved Stage 4 report for one generated Playwright spec file.
 @dataclass
 class EvalReport:
     filepath: str
@@ -30,9 +34,18 @@ class EvalReport:
     recommendation: Recommendation = Recommendation.ESCALATE
     issues: list[str] = field(default_factory=list)
 
+    # Thresholds define when generated code is accepted, regenerated, or escalated.
     accept_threshold: float = 0.72
     regenerate_threshold: float = 0.52
 
+    # Convert the report into JSON-safe values for saved evaluation artifacts.
+    def to_json_dict(self) -> dict[str, Any]:
+        data = asdict(self)
+        data["generated_at"] = self.generated_at.isoformat()
+        data["recommendation"] = self.recommendation.value
+        return data
+
+    # Aggregate metric scores into the final accept/regenerate/escalate decision.
     def compute(self) -> EvalReport:
         weights = {
             "No Hallucinated Page Methods": 0.18,

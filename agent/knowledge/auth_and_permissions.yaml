@@ -1,0 +1,19 @@
+auth:
+  guest:
+    required: false
+    scope: "Public home page, rooms, reservations, and contact form."
+
+  admin:
+    required: true
+    login_page: "/admin"
+    credentials: "Use only when the requirement explicitly provides test credentials."
+
+access:
+  public:
+    - "GET /"
+    - "POST /api/booking"
+    - "GET /api/booking/{bookingId}"
+    - "POST /api/message"
+  admin_only:
+    - "Admin rooms dashboard"
+    - "Room creation, update, or deletion"

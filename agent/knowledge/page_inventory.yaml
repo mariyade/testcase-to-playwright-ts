@@ -1,0 +1,30 @@
+pages:
+  home:
+    path: "/"
+    page_object: "HomePage"
+    supports:
+      - "room browsing"
+      - "contact form"
+
+  reservation:
+    path_pattern: "/reservation/{roomId}?checkin={date}&checkout={date}"
+    page_object: "BookingPage"
+    supports:
+      - "opening reservation form"
+      - "filling guest details"
+      - "submitting booking"
+      - "booking confirmation"
+
+  admin:
+    path: "/admin"
+    page_object: "AdminPage"
+    supports:
+      - "admin login"
+      - "rooms dashboard"
+
+api:
+  booking:
+    page_object: "BookingApi"
+    endpoints:
+      - "POST /api/booking"
+      - "GET /api/booking/{bookingId}"

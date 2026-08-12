@@ -1,9 +1,15 @@
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
-from agent.models import FixtureInfo, PageObjectInfo, RepoContext
+from agent.models import RepoContext
+from agent.stage2_context_retrieval.implementation_planner import enrich_implementation_plan
+from agent.stage2_context_retrieval.typescript_scanner import (
+    assertion_contracts,
+    read_fixtures,
+    read_page_objects,
+    read_type_shapes,
+)
 
 try:
     import yaml
@@ -11,14 +17,24 @@ except ModuleNotFoundError:
     yaml = None
 
 
-CLASS_RE = re.compile(r"export\s+class\s+([A-Z][A-Za-z0-9_]*)")
-METHOD_RE = re.compile(r"(?:async\s+)?([a-zA-Z_][A-Za-z0-9_]*)\s*\([^)]*\)\s*(?::\s*[^{]+)?\s*\{")
-PROPERTY_RE = re.compile(
-    r"(?:readonly|public|private|protected)?\s+([a-zA-Z_][A-Za-z0-9_]*)\s*[:=]"
-)
-FIXTURE_RE = re.compile(r"\b([a-zA-Z_][A-Za-z0-9_]*)\s*:\s*async\s*\(")
+# Build the complete Stage 2 context used by Stage 3.
+# It scans the repo, retrieves relevant chunks, then plans how each test maps to code.
+def scan_playwright_repo_with_retrieval(
+    playwright_root: str | Path,
+    knowledge_dir: str | Path,
+    vector_store_dir: str | Path,
+    spec,
+) -> RepoContext:
+    from agent.stage2_context_retrieval.retriever import retrieve_context
+
+    context = scan_playwright_repo(playwright_root, knowledge_dir)
+    context.retrieved_chunks = retrieve_context(spec, Path(vector_store_dir)).chunks
+    context.implementation = enrich_implementation_plan(context, spec)
+    return context
 
 
+# Read static repository facts into RepoContext without using the vector index.
+# This captures page-object contracts, fixtures, existing specs, and knowledge docs.
 def scan_playwright_repo(
     playwright_root: str | Path, knowledge_dir: str | Path | None = None
 ) -> RepoContext:
@@ -28,14 +44,16 @@ def scan_playwright_repo(
     tests_dir = root / "tests"
 
     context = RepoContext(playwright_root=root)
+    type_shapes = read_type_shapes(pages_dir)
 
     if pages_dir.exists():
         for path in sorted(pages_dir.rglob("*.ts")):
-            context.page_objects.extend(_read_page_objects(path))
+            context.page_objects.extend(read_page_objects(path, type_shapes))
+        context.repository_contracts.assertions = assertion_contracts(context.page_objects)
 
     if fixtures_dir.exists():
         for path in sorted(fixtures_dir.rglob("*.ts")):
-            context.fixtures.extend(_read_fixtures(path))
+            context.fixtures.extend(read_fixtures(path))
 
     if tests_dir.exists():
         context.example_specs = sorted(
@@ -48,58 +66,11 @@ def scan_playwright_repo(
     return context
 
 
-def scan_playwright_repo_with_retrieval(
-    playwright_root: str | Path,
-    knowledge_dir: str | Path,
-    vector_store_dir: str | Path,
-    spec,
-) -> RepoContext:
-    from agent.stage2_context_retrieval.retriever import retrieve_context
-
-    context = scan_playwright_repo(playwright_root, knowledge_dir)
-    context.retrieved_chunks = retrieve_context(spec, Path(vector_store_dir)).chunks
-    return context
-
-
-def _read_page_objects(path: Path) -> list[PageObjectInfo]:
-    source = path.read_text(encoding="utf-8")
-    classes = CLASS_RE.findall(source)
-    if not classes:
-        return []
-
-    methods = [
-        name
-        for name in METHOD_RE.findall(source)
-        if name not in {"if", "for", "while", "switch", "catch", "constructor"}
-    ]
-    properties = [
-        name
-        for name in PROPERTY_RE.findall(source)
-        if name not in {"return", "const", "let", "var", "await"}
-    ]
-
-    return [
-        PageObjectInfo(
-            name=class_name,
-            filepath=path,
-            methods=sorted(set(methods)),
-            properties=sorted(set(properties)),
-        )
-        for class_name in classes
-    ]
-
-
-def _read_fixtures(path: Path) -> list[FixtureInfo]:
-    source = path.read_text(encoding="utf-8")
-    names = set(FIXTURE_RE.findall(source))
-    if "test.extend" in source:
-        names.add("page")
-    return [FixtureInfo(name=name, source_file=path) for name in sorted(names)]
-
-
 KNOWLEDGE_EXTENSIONS = {".md", ".yaml", ".yml"}
 
 
+# Load markdown/YAML knowledge files into plain text.
+# YAML is normalized when PyYAML is installed so prompt output is stable.
 def _read_knowledge(path: Path) -> dict[str, str]:
     knowledge: dict[str, str] = {}
     if not path.exists():
